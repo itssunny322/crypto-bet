@@ -31,8 +31,8 @@ interface OracleInterface {
         external view returns (
             bytes32       id,
             string memory name,
-            string memory participants,
-            uint8         participantCount,
+            string memory teamAname,
+            string memory teamBname,
             uint          date,
             EventOutcome  outcome,
             int8          winner
@@ -42,8 +42,8 @@ interface OracleInterface {
         external view returns (
             bytes32       id,
             string memory name,
-            string memory participants,
-            uint8          participantCount,
+            string memory teamAname,
+            string memory teamBname,
             uint          date,
             EventOutcome  outcome,
             int8          winner
