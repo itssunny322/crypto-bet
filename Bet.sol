@@ -5,6 +5,8 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
 
 import "./OracleInterface.sol";
 
@@ -21,6 +23,11 @@ import "./OracleInterface.sol";
  * @author Tanteli, block74
  */
 contract Bet is Ownable, ReentrancyGuard {
+    /**
+     * @notice Safe guarding contract from integer
+     * overflow and underflow vulnerabilities.
+     */
+    using SafeMath for uint256;
 
     /**
      * @dev An instance of ERC20 DAI Token
@@ -62,6 +69,19 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256    amount;        // bet amount
         uint8   chosenWinner;  // Index of the team that will win according to the player
     }
+
+    /**
+     * @dev payload of user balance and bets
+     */
+    struct UserBalanceInfo{
+        uint256 depositedAmount;
+        uint256 ongoingBetAmount;
+        uint256 balanceAvailable;
+        uint256 balancewithdrawn;
+        uint256 balanceLost;
+    }
+
+    mapping(address => UserBalanceInfo) public userTokenBal;
 
     /**
      * @dev Possible outcomes for a sport event
@@ -124,6 +144,14 @@ contract Bet is Ownable, ReentrancyGuard {
     {
         // At least a minimum amount is required to be deposited
         require(_amount >= 10, "Amount deposited must be >= 10");
+        uint256 depositAmount = userTokenBal[msg.sender].depositedAmount.add(
+            _amount
+        );
+        uint256 amountAvaliable = userTokenBal[msg.sender].balanceAvailable.add(
+            _amount
+        );
+        UserBalanceInfo memory newDeposit = UserBalanceInfo(depositAmount, 0, amountAvaliable,0,0);
+        userTokenBal[msg.sender] = newDeposit;
         Dai.transferFrom(_sender, address(this), _amount);
     }
 
@@ -214,8 +242,8 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param _eventId the id of the desired event
      * @return id   the id of the event
      * @return name the name of the event
-     * @return participants a string with the name of the event's participants separated with a pipe symbol ('|')
-     * @return participantCount the number of the event's participants
+     * @return teamAname
+     * @return teamBname
      * @return date when the event takes place
      * @return outcome an integer that represents the event outcome
      * @return winner the index of the winner
@@ -224,8 +252,8 @@ contract Bet is Ownable, ReentrancyGuard {
         public view returns (
             bytes32                   id,
             string memory             name,
-            string memory             participants,
-            uint8                     participantCount,
+            string memory             teamAname,
+            string memory             teamBname,
             uint                      date,
             OracleInterface.EventOutcome outcome,
             int8                      winner
@@ -238,8 +266,8 @@ contract Bet is Ownable, ReentrancyGuard {
      * @notice returns the full data of the most recent bettable sport event
      * @return id   the id of the event
      * @return name the name of the event
-     * @return participants the name of the event's participants separated with a pipe symbol ('|')
-     * @return participantCount the number of the event's participants
+     * @return teamAname
+     * @return teamBname
      * @return date when the event takes place
      * @return outcome an integer that represents the event outcome
      * @return winner the index of the winner (0 = TeamA, 1 = TeamB)
@@ -248,8 +276,8 @@ contract Bet is Ownable, ReentrancyGuard {
         public view returns (
             bytes32                      id,
             string memory                name,
-            string memory                participants,
-            uint                         participantCount,
+            string memory                teamAname,
+            string memory                teamBname,
             uint                         date,
             OracleInterface.EventOutcome outcome,
             int8                         winner
@@ -280,13 +308,19 @@ contract Bet is Ownable, ReentrancyGuard {
         // Event must still be open for betting
         require(_eventOpenForBetting(_eventId), "Event not open for betting");
 
+        // Amount must be greater than 0
+        require(_amount>0,"Amount must be greater than 0");
 
-        
-        
+        // Amount must be greater than balanceAvaliable
+
+        require(_amount>=userTokenBal[msg.sender].balanceAvailable,"Amount must be greater than avaliable amount");
+
 
         // add the new bet
         Bet[] storage bets = eventToBets[_eventId];
         bets.push( Bet(msg.sender, _eventId, _amount, _chosenWinner));
+        userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender].balanceAvailable.sub(_amount);
+        userTokenBal[msg.sender].ongoingBetAmount = userTokenBal[msg.sender].ongoingBetAmount.add(_amount);
 
         // add the mapping
         bytes32[] storage userBets = userToBets[msg.sender];
@@ -298,8 +332,7 @@ contract Bet is Ownable, ReentrancyGuard {
             _chosenWinner,
             _amount        // bet amount
         );
-        // transfer the player's money into the contract's account
-        deposit(msg.sender, _amount);
+
     }
 
     /**
