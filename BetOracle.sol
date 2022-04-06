@@ -30,8 +30,8 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
     struct SportEvent {
         bytes32      id;
         string       name;
-        string       participants;
-        uint8        participantCount;
+        string       teamAname;
+        string       teamBname;
         uint         date;
         EventOutcome outcome;
         int8         winner;
@@ -44,9 +44,9 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      */
     event SportEventAdded(
         bytes32      _eventId,
-        string       _name,
-        string       _participants,
-        uint8        _participantCount,
+        string       name,
+        string       _teamAname,
+        string       _teamBname,
         uint         _date,
         EventOutcome _eventOutcome,
         int8         _winner
@@ -55,15 +55,15 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
     /**
      * @notice Add a new pending sport event into the blockchain
      * @param _name descriptive name for the sport event (e.g. Pac vs. Mayweather 2016)
-     * @param _participants |-delimited string of participants names (e.g. "Montpellier|Monaco")
-     * @param _participantCount number of participants
+     * @param _teamAname name of teamA
+     * @param _teamBname name of teamB
      * @param _date date set for the sport event
      * @return the unique id of the newly created sport event
      */
     function addSportEvent(
         string memory _name,
-        string memory _participants,
-        uint8         _participantCount,
+        string memory _teamAname,
+        string memory _teamBname,
         uint          _date
     )
         public onlyOwner nonReentrant
@@ -77,21 +77,21 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
         // );
 
         // Hash key fields of the sport event to get a unique id
-        bytes32 eventId = keccak256(abi.encodePacked(_name, _participantCount, _date));
+        bytes32 eventId = keccak256(abi.encodePacked(_name, _teamAname, _teamBname, _date));
 
         // Make sure that the sport event is unique and does not exist yet
         require( !eventExists(eventId), "Event already exists");
 
         // Add the sport event
-        events.push( SportEvent(eventId, _name, _participants, _participantCount, _date, EventOutcome.Pending, -1));
+        events.push( SportEvent(eventId, _name, _teamAname, _teamBname, _date, EventOutcome.Pending, -1));
         uint newIndex           = events.length - 1;
         eventIdToIndex[eventId] = newIndex + 1;
 
         emit SportEventAdded(
             eventId,
             _name,
-            _participants,
-            _participantCount,
+            _teamAname,
+            _teamBname,
             _date,
             EventOutcome.Pending,
             -1                      // no winner yet
@@ -147,7 +147,7 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
         SportEvent storage theMatch = events[index];
 
         if (_outcome == EventOutcome.Decided)
-            require(_winner >= 0 && theMatch.participantCount > uint8(_winner));
+            require(_winner >= 0);
 
         // Set the outcome
         theMatch.outcome = _outcome;
@@ -215,8 +215,8 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      * @param _eventId the unique id of the desired event
      * @return id   the id of the event
      * @return name the name of the event
-     * @return participants a string with the name of the event's participants separated with a pipe symbol ('|')
-     * @return participantCount the number of the event's participants
+     * @return teamAname
+     * @return teamBname
      * @return date when the event takes place
      * @return outcome an integer that represents the event outcome
      * @return winner the index of the winner
@@ -226,8 +226,8 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
         returns (
             bytes32       id,
             string memory name,
-            string memory participants,
-            uint8         participantCount,
+            string memory teamAname,
+            string memory teamBname,
             uint          date,
             EventOutcome  outcome,
             int8          winner
@@ -236,10 +236,10 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
         // Get the sport event
         if (eventExists(_eventId)) {
             SportEvent storage theMatch = events[_getMatchIndex(_eventId)];
-            return (theMatch.id, theMatch.name, theMatch.participants, theMatch.participantCount, theMatch.date, theMatch.outcome, theMatch.winner);
+            return (theMatch.id, theMatch.name, theMatch.teamAname, theMatch.teamBname, theMatch.date, theMatch.outcome, theMatch.winner);
         }
         else {
-            return (_eventId, "", "", 0, 0, EventOutcome.Pending, -1);
+            return (_eventId, "", "", "", 0, EventOutcome.Pending, -1);
         }
     }
 
@@ -249,8 +249,8 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      *   otherwise, returns the most recent sport event either pending or completed
      * @return id   the id of the event
      * @return name the name of the event
-     * @return participants a string with the name of the event's participants separated with a pipe symbol ('|')
-     * @return participantCount the number of the event's participants
+     * @return teamAname
+     * @return teamBname
      * @return date when the event takes place
      * @return outcome an integer that represents the event outcome
      * @return winner the index of the winner
@@ -260,8 +260,8 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
         returns (
             bytes32         id,
             string memory   name,
-            string memory   participants,
-            uint8           participantCount,
+            string memory   teamAname,
+            string memory   teamBname,
             uint            date,
             EventOutcome    outcome,
             int8            winner
