@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./OracleInterface.sol";
 
 
+
 /**
  * @title An smart-contract Oracle that register sport events, retrieve their outcomes and communicate their results when asked for.
  * @notice Collects and provides information on sport events and their outcomes

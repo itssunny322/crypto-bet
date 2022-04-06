@@ -59,7 +59,7 @@ contract Bet is Ownable, ReentrancyGuard {
     struct Bet {
         address user;          // who placed it
         bytes32 eventId;       // id of the sport event as registered in the Oracle
-        uint    amount;        // bet amount
+        uint256    amount;        // bet amount
         uint8   chosenWinner;  // Index of the team that will win according to the player
     }
 
@@ -97,10 +97,11 @@ contract Bet is Ownable, ReentrancyGuard {
     /**
      * @param _tokenAddress the address of the deployed ERC20 DAI token
      */
-     constructor(address _tokenAddress)
+     constructor(address _tokenAddress,address _oracleAddress)
         notAddress0(_tokenAddress)
      {
         Dai = IERC20(_tokenAddress);
+        setOracleAddress(_oracleAddress);
     }
 
      /**
@@ -118,7 +119,7 @@ contract Bet is Ownable, ReentrancyGuard {
       * @param _amount the amount to be deposited
       */
       function deposit(address _sender, uint _amount)
-            external
+            public
             notAddress0(_sender)
     {
         // At least a minimum amount is required to be deposited
@@ -144,7 +145,7 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param _oracleAddress the address of the sport event bet oracle
      */
     function setOracleAddress(address _oracleAddress)
-        external
+        internal
         onlyOwner notAddress0(_oracleAddress)
         returns (bool)
     {
@@ -262,7 +263,7 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param _eventId      id of the sport event on which to bet
      * @param _chosenWinner index of the supposed winner team
      */
-    function placeBet(bytes32 _eventId, uint8 _chosenWinner)
+    function placeBet(bytes32 _eventId, uint8 _chosenWinner, uint256 _amount)
         public payable
         notAddress0(msg.sender)
         nonReentrant
@@ -280,12 +281,12 @@ contract Bet is Ownable, ReentrancyGuard {
         require(_eventOpenForBetting(_eventId), "Event not open for betting");
 
 
-        // transfer the player's money into the contract's account
-        payable(address(this)).transfer(msg.value);
+        
+        
 
         // add the new bet
         Bet[] storage bets = eventToBets[_eventId];
-        bets.push( Bet(msg.sender, _eventId, msg.value, _chosenWinner));
+        bets.push( Bet(msg.sender, _eventId, _amount, _chosenWinner));
 
         // add the mapping
         bytes32[] storage userBets = userToBets[msg.sender];
@@ -295,8 +296,10 @@ contract Bet is Ownable, ReentrancyGuard {
             _eventId,
             msg.sender,      // player
             _chosenWinner,
-            msg.value        // bet amount
+            _amount        // bet amount
         );
+        // transfer the player's money into the contract's account
+        deposit(msg.sender, _amount);
     }
 
     /**
