@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 
 import "./OracleInterface.sol";
+import "./betOracle.sol";
 
 /**
  * This Ethereum smart-contract takes bets placed on sport events.
@@ -67,7 +68,7 @@ contract Bet is Ownable, ReentrancyGuard {
         address user;          // who placed it
         bytes32 eventId;       // id of the sport event as registered in the Oracle
         uint256    amount;        // bet amount
-        uint8   chosenWinner;  // Index of the team that will win according to the player
+        int8   chosenWinner;  // Index of the team that will win according to the player
     }
 
     /**
@@ -80,7 +81,9 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 balancewithdrawn;
         uint256 balanceLost;
     }
-
+    /**
+     * @notice mapping from user address to user bal info.
+     */
     mapping(address => UserBalanceInfo) public userTokenBal;
 
     /**
@@ -110,7 +113,7 @@ contract Bet is Ownable, ReentrancyGuard {
     event BetPlaced(
             bytes32 _eventId,
             address _player,
-            uint8   _chosenWinner,
+            int8   _chosenWinner,
             uint    _amount
     );
 
@@ -208,7 +211,7 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param _eventId id of a event
      * @param _chosenWinner the index of the participant to bet on (to win)
      */
-    function _betIsValid(address _user, bytes32 _eventId, uint8 _chosenWinner)
+    function _betIsValid(address _user, bytes32 _eventId, int8 _chosenWinner)
         private pure returns (bool)
     {
         // if (userToBets[_user].length == 0) {
@@ -272,6 +275,8 @@ contract Bet is Ownable, ReentrancyGuard {
      * @return outcome an integer that represents the event outcome
      * @return winner the index of the winner (0 = TeamA, 1 = TeamB)
      */
+
+     //bytes32,string memory,string memory,string memory,uint256,enum OracleInterface.EventOutcome,int8
     function getLatestEvent()
         public view returns (
             bytes32                      id,
@@ -291,7 +296,7 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param _eventId      id of the sport event on which to bet
      * @param _chosenWinner index of the supposed winner team
      */
-    function placeBet(bytes32 _eventId, uint8 _chosenWinner, uint256 _amount)
+    function placeBet(bytes32 _eventId, int8 _chosenWinner, uint256 _amount)
         public payable
         notAddress0(msg.sender)
         nonReentrant
@@ -313,7 +318,7 @@ contract Bet is Ownable, ReentrancyGuard {
 
         // Amount must be greater than balanceAvaliable
 
-        require(_amount>=userTokenBal[msg.sender].balanceAvailable,"Amount must be greater than avaliable amount");
+        require(_amount<=userTokenBal[msg.sender].balanceAvailable,"Amount must be greater than avaliable amount");
 
 
         // add the new bet
@@ -334,6 +339,40 @@ contract Bet is Ownable, ReentrancyGuard {
         );
 
     }
+    /**
+     * @notice send winner price
+     */
+     function withdrawAmount( uint256 amount)public returns(bool success){
+         userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender].balanceAvailable.sub(amount);
+         Dai.transfer( msg.sender , amount);
+     }
+
+
+    /**
+     * @notice bet lists of the given event
+     * @param eventId id of event
+     */
+     function eventClosure(bytes32 eventId) public returns(Bet[] memory){
+        (
+            bytes32                      id,
+            string memory                name,
+            string memory                teamAname,
+            string memory                teamBname,
+            uint                         date,
+            OracleInterface.EventOutcome outcome,
+            int8                         winner
+        )= getEvent(eventId);
+        require(outcome == OracleInterface.EventOutcome.Decided,"results not declared yet");
+        
+         for (uint256 i = 0; i< eventToBets[eventId].length; i++){
+             if(eventToBets[eventId][0].chosenWinner == winner){
+                  userTokenBal[eventToBets[eventId][0].user].balanceAvailable = userTokenBal[msg.sender].balanceAvailable.add(2 * eventToBets[eventId][0].amount);
+                  userTokenBal[eventToBets[eventId][0].user].ongoingBetAmount = userTokenBal[msg.sender].ongoingBetAmount.sub(eventToBets[eventId][0].amount);
+             }
+         }
+
+       return eventToBets[eventId];
+     }
 
     /**
      *  @notice This smart-contract accepts DAI ERC20 token
