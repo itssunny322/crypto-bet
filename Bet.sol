@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-
 import "./OracleInterface.sol";
-import "./BetOracle.sol";
+import "./betOracle.sol";
 
 /**
  * This Ethereum smart-contract takes bets placed on sport events.
@@ -33,7 +31,7 @@ contract Bet is Ownable, ReentrancyGuard {
     /**
      * @dev An instance of ERC20 DAI Token
      */
-     IERC20 private Dai;
+    IERC20 private Dai;
 
     /**
      * @dev list of all bets per player, ie. a map composed (player address => bet id) pairs
@@ -59,30 +57,32 @@ contract Bet is Ownable, ReentrancyGuard {
     /**
      * @dev minimum bet amount
      */
-    uint internal minimumBet = 0.1 ether;
+    uint256 internal minimumBet = 0.1 ether;
 
     /**
      * @dev payload of a bet on a sport event
      */
     struct Bet {
-        address user;          // who placed it
-        bytes32 eventId;       // id of the sport event as registered in the Oracle
-        uint256    amount;        // bet amount
-        int8   chosenWinner;  // Index of the team that will win according to the player
+        address user; // who placed it
+        bytes32 eventId; // id of the sport event as registered in the Oracle
+        uint256 amount; // bet amount
+        int8 chosenWinner; // Index of the team that will win according to the player
     }
 
-    struct AmountonBet{
+    struct AmountonBet {
         uint256 totalAmountOnTeamA;
         uint256 totalAmountOnTeamB;
     }
 
-        // mapping(address => mapping(address => uint256)) public userTokenLockedBal;
-
+    //mapping from event id to bet on each team
     mapping(bytes32 => AmountonBet) public userBet;
+
+    // mapping from token address to bool
+    mapping(address => bool) public tokenRegistered;
     /**
      * @dev payload of user balance and bets
      */
-    struct UserBalanceInfo{
+    struct UserBalanceInfo {
         uint256 depositedAmount;
         uint256 ongoingBetAmount;
         uint256 balanceAvailable;
@@ -113,79 +113,107 @@ contract Bet is Ownable, ReentrancyGuard {
     /**
      * @dev Sent once the Sport Event Oracle is set
      */
-    event OracleAddressSet( address _address);
+    event OracleAddressSet(address _address);
 
     /**
      * @dev Sent when once a bet is placed
      */
     event BetPlaced(
-            bytes32 _eventId,
-            address _player,
-            int8   _chosenWinner,
-            uint    _amount
+        bytes32 _eventId,
+        address _player,
+        int8 _chosenWinner,
+        uint256 _amount
     );
 
     /**
      * @param _tokenAddress the address of the deployed ERC20 DAI token
      */
-     constructor(address _tokenAddress,address _oracleAddress)
+    constructor(address _tokenAddress, address _oracleAddress)
         notAddress0(_tokenAddress)
-     {
+    {
         Dai = IERC20(_tokenAddress);
         setOracleAddress(_oracleAddress);
     }
 
-     /**
-      * @return the DAI balance of the contract
-      */
-      function getContractDAIBalance()
-        public view returns (uint)
-      {
-          return Dai.balanceOf(address(this));
-      }
+    /**
+     * @notice register token
+     * @param tokenAddress address of token
+     * @return success true if success
+     */
+    function registerToken(address tokenAddress)
+        public
+        onlyOwner
+        returns (bool success)
+    {
+        require(tokenRegistered[tokenAddress] == false, "already registered");
+        tokenRegistered[tokenAddress] = true;
+        return true;
+    }
 
-      function getOdds(bytes32 eventId) public view returns(uint256 oddsTeamA,uint256 oddsTeamB){
+    /**
+     * @return the DAI balance of the contract
+     */
+    function getContractDAIBalance() public view returns (uint256) {
+        return Dai.balanceOf(address(this));
+    }
+
+    function getOdds(bytes32 eventId)
+        public
+        view
+        returns (uint256 oddsTeamA, uint256 oddsTeamB)
+    {
         uint256 totalAmountPlacedTeamA1;
         uint256 totalAmountPlacedTeamB1;
         uint256 currentoddsTeamA;
         uint256 currentoddsTeamB;
-        totalAmountPlacedTeamA1= userBet[eventId].totalAmountOnTeamA;
-        totalAmountPlacedTeamB1= userBet[eventId].totalAmountOnTeamB;
-        currentoddsTeamA = totalAmountPlacedTeamA1.mul(100).div(totalAmountPlacedTeamB1);
-        currentoddsTeamB = totalAmountPlacedTeamB1.mul(100).div(totalAmountPlacedTeamA1);
-        return (currentoddsTeamA,currentoddsTeamB);
-       }
+        totalAmountPlacedTeamA1 = userBet[eventId].totalAmountOnTeamA;
+        totalAmountPlacedTeamB1 = userBet[eventId].totalAmountOnTeamB;
+        currentoddsTeamA = totalAmountPlacedTeamA1.mul(100).div(
+            totalAmountPlacedTeamB1
+        );
+        currentoddsTeamB = totalAmountPlacedTeamB1.mul(100).div(
+            totalAmountPlacedTeamA1
+        );
+        return (currentoddsTeamA, currentoddsTeamB);
+    }
 
-      /**
-      * @notice Moves `_amount` tokens from `_sender` to this contract
-      * @param _sender the address that owns  the tokens
-      * @param _amount the amount to be deposited
-      */
-      function deposit(address _sender, uint _amount)
-            public
-            notAddress0(_sender)
+    /**
+     * @notice Moves `_amount` tokens from `_sender` to this contract
+     * @param tokenAddress the address that owns  the tokens
+     * @param _amount the amount to be deposited
+     */
+    function deposit(address tokenAddress, uint256 _amount)
+        public
+        notAddress0(msg.sender)
     {
         // At least a minimum amount is required to be deposited
         require(_amount >= 10, "Amount deposited must be >= 10");
+        require(tokenRegistered[tokenAddress] == true, "token not registered");
         uint256 depositAmount = userTokenBal[msg.sender].depositedAmount.add(
             _amount
         );
         uint256 amountAvaliable = userTokenBal[msg.sender].balanceAvailable.add(
             _amount
         );
-        UserBalanceInfo memory newDeposit = UserBalanceInfo(depositAmount, 0, amountAvaliable,0,0);
+        UserBalanceInfo memory newDeposit = UserBalanceInfo(
+            depositAmount,
+            0,
+            amountAvaliable,
+            0,
+            0
+        );
         userTokenBal[msg.sender] = newDeposit;
-        Dai.transferFrom(_sender, address(this), _amount);
+        IERC20(tokenAddress).transferFrom(msg.sender, address(this), _amount);
     }
 
     /**
-      * @notice Sets `_amount` as the allowance of `_spender` over the caller's tokens.
-      * @param _spender an address allowed to spend user's DAI
-      * @param _amount the amount approved to be used by _spender
-      */
-      function approve(address _spender, uint _amount)
-         external
-         notAddress0(_spender)
+     * @notice Sets `_amount` as the allowance of `_spender` over the caller's tokens.
+     * @param _spender an address allowed to spend user's DAI
+     * @param _amount the amount approved to be used by _spender
+     */
+    function approve(address _spender, uint256 _amount)
+        external
+        notAddress0(_spender)
     {
         Dai.approve(_spender, _amount);
     }
@@ -197,7 +225,8 @@ contract Bet is Ownable, ReentrancyGuard {
      */
     function setOracleAddress(address _oracleAddress)
         internal
-        onlyOwner notAddress0(_oracleAddress)
+        onlyOwner
+        notAddress0(_oracleAddress)
         returns (bool)
     {
         oracleAddress = _oracleAddress;
@@ -210,18 +239,14 @@ contract Bet is Ownable, ReentrancyGuard {
     /**
      * @notice for testing purposes: make sure that the sport event oracle is callable
      */
-    function testOracleConnection()
-        public view returns (bool)
-    {
+    function testOracleConnection() public view returns (bool) {
         return oracleAddress != address(0) && betOracle.testConnection();
     }
 
-   /**
+    /**
      * @return the address of the oracle we use to get the sport events and their outcomes
      */
-    function getOracleAddress()
-        external view returns (address)
-    {
+    function getOracleAddress() external view returns (address) {
         return oracleAddress;
     }
 
@@ -231,9 +256,11 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param _eventId id of a event
      * @param _chosenWinner the index of the participant to bet on (to win)
      */
-    function _betIsValid(address _user, bytes32 _eventId, int8 _chosenWinner)
-        private pure returns (bool)
-    {
+    function _betIsValid(
+        address _user,
+        bytes32 _eventId,
+        int8 _chosenWinner
+    ) private pure returns (bool) {
         // if (userToBets[_user].length == 0) {
         //     userToBets[_user]
         // }
@@ -245,7 +272,9 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param _eventId id of an event
      */
     function _eventOpenForBetting(bytes32 _eventId)
-        private pure returns (bool)
+        private
+        pure
+        returns (bool)
     {
         return true;
     }
@@ -255,7 +284,9 @@ contract Bet is Ownable, ReentrancyGuard {
      * @return pendingEvents the list of pending sport events
      */
     function getBettableEvents()
-        public view returns (bytes32[] memory pendingEvents)
+        public
+        view
+        returns (bytes32[] memory pendingEvents)
     {
         return betOracle.getPendingEvents();
     }
@@ -272,14 +303,16 @@ contract Bet is Ownable, ReentrancyGuard {
      * @return winner the index of the winner
      */
     function getEvent(bytes32 _eventId)
-        public view returns (
-            bytes32                   id,
-            string memory             name,
-            string memory             teamAname,
-            string memory             teamBname,
-            uint                      date,
+        public
+        view
+        returns (
+            bytes32 id,
+            string memory name,
+            string memory teamAname,
+            string memory teamBname,
+            uint256 date,
             OracleInterface.EventOutcome outcome,
-            int8                      winner
+            int8 winner
         )
     {
         return betOracle.getEvent(_eventId);
@@ -296,16 +329,18 @@ contract Bet is Ownable, ReentrancyGuard {
      * @return winner the index of the winner (0 = TeamA, 1 = TeamB)
      */
 
-     //bytes32,string memory,string memory,string memory,uint256,enum OracleInterface.EventOutcome,int8
+    //bytes32,string memory,string memory,string memory,uint256,enum OracleInterface.EventOutcome,int8
     function getLatestEvent()
-        public view returns (
-            bytes32                      id,
-            string memory                name,
-            string memory                teamAname,
-            string memory                teamBname,
-            uint                         date,
+        public
+        view
+        returns (
+            bytes32 id,
+            string memory name,
+            string memory teamAname,
+            string memory teamBname,
+            uint256 date,
             OracleInterface.EventOutcome outcome,
-            int8                         winner
+            int8 winner
         )
     {
         return betOracle.getLatestEvent(true);
@@ -316,11 +351,11 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param _eventId      id of the sport event on which to bet
      * @param _chosenWinner index of the supposed winner team
      */
-    function placeBet(bytes32 _eventId, int8 _chosenWinner, uint256 _amount)
-        public payable
-        notAddress0(msg.sender)
-        nonReentrant
-    {
+    function placeBet(
+        bytes32 _eventId,
+        int8 _chosenWinner,
+        uint256 _amount
+    ) public payable notAddress0(msg.sender) nonReentrant {
         // At least a minimum amout is required to bet
         // require(msg.value >= minimumBet, "Bet amount must be >= minimum bet");
 
@@ -328,30 +363,43 @@ contract Bet is Ownable, ReentrancyGuard {
         require(betOracle.eventExists(_eventId), "Specified event not found");
 
         // The chosen winner must fall within the defined number of participants for this event
-        require(_betIsValid(msg.sender, _eventId, _chosenWinner), "Bet is not valid");
+        require(
+            _betIsValid(msg.sender, _eventId, _chosenWinner),
+            "Bet is not valid"
+        );
 
         // Event must still be open for betting
         require(_eventOpenForBetting(_eventId), "Event not open for betting");
 
         // Amount must be greater than 0
-        require(_amount>0,"Amount must be greater than 0");
+        require(_amount > 0, "Amount must be greater than 0");
 
         // Amount must be greater than balanceAvaliable
 
-        require(_amount<=userTokenBal[msg.sender].balanceAvailable,"Amount must be greater than avaliable amount");
+        require(
+            _amount <= userTokenBal[msg.sender].balanceAvailable,
+            "Amount must be greater than avaliable amount"
+        );
 
-        if(_chosenWinner==0){
-            userBet[_eventId].totalAmountOnTeamA = userBet[_eventId].totalAmountOnTeamA.add(_amount);
-        }
-        else{
-            userBet[_eventId].totalAmountOnTeamB = userBet[_eventId].totalAmountOnTeamB.add(_amount);
+        if (_chosenWinner == 0) {
+            userBet[_eventId].totalAmountOnTeamA = userBet[_eventId]
+                .totalAmountOnTeamA
+                .add(_amount);
+        } else {
+            userBet[_eventId].totalAmountOnTeamB = userBet[_eventId]
+                .totalAmountOnTeamB
+                .add(_amount);
         }
 
         // add the new bet
         Bet[] storage bets = eventToBets[_eventId];
-        bets.push( Bet(msg.sender, _eventId, _amount, _chosenWinner));
-        userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender].balanceAvailable.sub(_amount);
-        userTokenBal[msg.sender].ongoingBetAmount = userTokenBal[msg.sender].ongoingBetAmount.add(_amount);
+        bets.push(Bet(msg.sender, _eventId, _amount, _chosenWinner));
+        userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender]
+            .balanceAvailable
+            .sub(_amount);
+        userTokenBal[msg.sender].ongoingBetAmount = userTokenBal[msg.sender]
+            .ongoingBetAmount
+            .add(_amount);
 
         // add the mapping
         bytes32[] storage userBets = userToBets[msg.sender];
@@ -359,57 +407,69 @@ contract Bet is Ownable, ReentrancyGuard {
 
         emit BetPlaced(
             _eventId,
-            msg.sender,      // player
+            msg.sender, // player
             _chosenWinner,
-            _amount        // bet amount
+            _amount // bet amount
         );
-
     }
+
     /**
      * @notice send winner price
      */
-     function withdrawAmount( uint256 amount)public returns(bool success){
-         userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender].balanceAvailable.sub(amount);
-         Dai.transfer( msg.sender , amount);
-     }
-
+    function withdrawAmount(uint256 amount) public returns (bool success) {
+        userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender]
+            .balanceAvailable
+            .sub(amount);
+        Dai.transfer(msg.sender, amount);
+    }
 
     /**
      * @notice bet lists of the given event
      * @param eventId id of event
      */
-     function eventClosure(bytes32 eventId) public returns(Bet[] memory){
+    function eventClosure(bytes32 eventId) public returns (Bet[] memory) {
         (
-            bytes32                      id,
-            string memory                name,
-            string memory                teamAname,
-            string memory                teamBname,
-            uint                         date,
+            bytes32 id,
+            string memory name,
+            string memory teamAname,
+            string memory teamBname,
+            uint256 date,
             OracleInterface.EventOutcome outcome,
-            int8                         winner
-        )= getEvent(eventId);
-        require(outcome == OracleInterface.EventOutcome.Decided,"results not declared yet");
-         (uint256 oddsTeamA,uint256 oddsTeamB) = getOdds(eventId);
-         uint256 multiplicationfactor;
-         for (uint256 i = 0; i< eventToBets[eventId].length; i++){
-             if(eventToBets[eventId][0].chosenWinner == winner){
-                 if(winner==0){
-                     multiplicationfactor = oddsTeamA;
-                 }
-                 else{
-                     multiplicationfactor = oddsTeamB;
-                 }
-                  userTokenBal[eventToBets[eventId][0].user].balanceAvailable = userTokenBal[msg.sender].balanceAvailable.add(multiplicationfactor.mul(eventToBets[eventId][0].amount).div(100));
-                  userTokenBal[eventToBets[eventId][0].user].ongoingBetAmount = userTokenBal[msg.sender].ongoingBetAmount.sub(eventToBets[eventId][0].amount);
-             }
-         }
+            int8 winner
+        ) = getEvent(eventId);
+        require(
+            outcome == OracleInterface.EventOutcome.Decided,
+            "results not declared yet"
+        );
+        (uint256 oddsTeamA, uint256 oddsTeamB) = getOdds(eventId);
+        uint256 multiplicationfactor;
+        for (uint256 i = 0; i < eventToBets[eventId].length; i++) {
+            if (eventToBets[eventId][0].chosenWinner == winner) {
+                if (winner == 0) {
+                    multiplicationfactor = oddsTeamA;
+                } else {
+                    multiplicationfactor = oddsTeamB;
+                }
+                uint am = eventToBets[eventId][0].amount;
+                uint add = multiplicationfactor.mul(am);
+                address user = eventToBets[eventId][0].user;
+                userTokenBal[user]
+                    .balanceAvailable = userTokenBal[msg.sender]
+                    .balanceAvailable
+                    .add(add
+                        );
+                userTokenBal[eventToBets[eventId][0].user]
+                    .ongoingBetAmount = userTokenBal[msg.sender]
+                    .ongoingBetAmount
+                    .sub(eventToBets[eventId][0].amount);
+            }
+        }
 
-       return eventToBets[eventId];
-     }
+        return eventToBets[eventId];
+    }
 
     /**
      *  @notice This smart-contract accepts DAI ERC20 token
      */
-    receive() external payable {
-    }
+    receive() external payable {}
 }
