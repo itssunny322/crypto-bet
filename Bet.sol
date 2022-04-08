@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 
 import "./OracleInterface.sol";
-import "./betOracle.sol";
+import "./BetOracle.sol";
 
 /**
  * This Ethereum smart-contract takes bets placed on sport events.
@@ -71,6 +71,14 @@ contract Bet is Ownable, ReentrancyGuard {
         int8   chosenWinner;  // Index of the team that will win according to the player
     }
 
+    struct AmountonBet{
+        uint256 totalAmountOnTeamA;
+        uint256 totalAmountOnTeamB;
+    }
+
+        // mapping(address => mapping(address => uint256)) public userTokenLockedBal;
+
+    mapping(bytes32 => AmountonBet) public userBet;
     /**
      * @dev payload of user balance and bets
      */
@@ -135,6 +143,18 @@ contract Bet is Ownable, ReentrancyGuard {
       {
           return Dai.balanceOf(address(this));
       }
+
+      function getOdds(bytes32 eventId) public view returns(uint256 oddsTeamA,uint256 oddsTeamB){
+        uint256 totalAmountPlacedTeamA1;
+        uint256 totalAmountPlacedTeamB1;
+        uint256 currentoddsTeamA;
+        uint256 currentoddsTeamB;
+        totalAmountPlacedTeamA1= userBet[eventId].totalAmountOnTeamA;
+        totalAmountPlacedTeamB1= userBet[eventId].totalAmountOnTeamB;
+        currentoddsTeamA = totalAmountPlacedTeamA1.mul(100).div(totalAmountPlacedTeamB1);
+        currentoddsTeamB = totalAmountPlacedTeamB1.mul(100).div(totalAmountPlacedTeamA1);
+        return (currentoddsTeamA,currentoddsTeamB);
+       }
 
       /**
       * @notice Moves `_amount` tokens from `_sender` to this contract
@@ -320,6 +340,12 @@ contract Bet is Ownable, ReentrancyGuard {
 
         require(_amount<=userTokenBal[msg.sender].balanceAvailable,"Amount must be greater than avaliable amount");
 
+        if(_chosenWinner==0){
+            userBet[_eventId].totalAmountOnTeamA = userBet[_eventId].totalAmountOnTeamA.add(_amount);
+        }
+        else{
+            userBet[_eventId].totalAmountOnTeamB = userBet[_eventId].totalAmountOnTeamB.add(_amount);
+        }
 
         // add the new bet
         Bet[] storage bets = eventToBets[_eventId];
@@ -363,10 +389,17 @@ contract Bet is Ownable, ReentrancyGuard {
             int8                         winner
         )= getEvent(eventId);
         require(outcome == OracleInterface.EventOutcome.Decided,"results not declared yet");
-        
+         (uint256 oddsTeamA,uint256 oddsTeamB) = getOdds(eventId);
+         uint256 multiplicationfactor;
          for (uint256 i = 0; i< eventToBets[eventId].length; i++){
              if(eventToBets[eventId][0].chosenWinner == winner){
-                  userTokenBal[eventToBets[eventId][0].user].balanceAvailable = userTokenBal[msg.sender].balanceAvailable.add(2 * eventToBets[eventId][0].amount);
+                 if(winner==0){
+                     multiplicationfactor = oddsTeamA;
+                 }
+                 else{
+                     multiplicationfactor = oddsTeamB;
+                 }
+                  userTokenBal[eventToBets[eventId][0].user].balanceAvailable = userTokenBal[msg.sender].balanceAvailable.add(multiplicationfactor.mul(eventToBets[eventId][0].amount).div(100));
                   userTokenBal[eventToBets[eventId][0].user].ongoingBetAmount = userTokenBal[msg.sender].ongoingBetAmount.sub(eventToBets[eventId][0].amount);
              }
          }
