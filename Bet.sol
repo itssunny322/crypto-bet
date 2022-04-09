@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./OracleInterface.sol";
-import "./betOracle.sol";
+import "./BetOracle.sol";
 
 /**
  * This Ethereum smart-contract takes bets placed on sport events.
@@ -157,10 +157,13 @@ contract Bet is Ownable, ReentrancyGuard {
         return Dai.balanceOf(address(this));
     }
 
-    function getOdds(bytes32 eventId)
+    /**
+     * @return oddsTeamA the odds on TeamA
+     */ 
+    function getOddsA(bytes32 eventId)
         public
         view
-        returns (uint256 oddsTeamA, uint256 oddsTeamB)
+        returns (uint256 oddsTeamA)
     {
         uint256 totalAmountPlacedTeamA1;
         uint256 totalAmountPlacedTeamB1;
@@ -174,7 +177,30 @@ contract Bet is Ownable, ReentrancyGuard {
         currentoddsTeamB = totalAmountPlacedTeamB1.mul(100).div(
             totalAmountPlacedTeamA1
         );
-        return (currentoddsTeamA, currentoddsTeamB);
+        return (currentoddsTeamA);
+    }
+
+    /**
+     * @return oddsTeamA the odds on TeamB
+     */
+    function getOddsB(bytes32 eventId)
+        public
+        view
+        returns (uint256 oddsTeamA)
+    {
+        uint256 totalAmountPlacedTeamA1;
+        uint256 totalAmountPlacedTeamB1;
+        uint256 currentoddsTeamA;
+        uint256 currentoddsTeamB;
+        totalAmountPlacedTeamA1 = userBet[eventId].totalAmountOnTeamA;
+        totalAmountPlacedTeamB1 = userBet[eventId].totalAmountOnTeamB;
+        currentoddsTeamA = totalAmountPlacedTeamA1.mul(100).div(
+            totalAmountPlacedTeamB1
+        );
+        currentoddsTeamB = totalAmountPlacedTeamB1.mul(100).div(
+            totalAmountPlacedTeamA1
+        );
+        return (currentoddsTeamB);
     }
 
     /**
@@ -421,6 +447,7 @@ contract Bet is Ownable, ReentrancyGuard {
             .balanceAvailable
             .sub(amount);
         Dai.transfer(msg.sender, amount);
+        return true;
     }
 
     /**
@@ -441,27 +468,16 @@ contract Bet is Ownable, ReentrancyGuard {
             outcome == OracleInterface.EventOutcome.Decided,
             "results not declared yet"
         );
-        (uint256 oddsTeamA, uint256 oddsTeamB) = getOdds(eventId);
         uint256 multiplicationfactor;
         for (uint256 i = 0; i < eventToBets[eventId].length; i++) {
             if (eventToBets[eventId][0].chosenWinner == winner) {
                 if (winner == 0) {
-                    multiplicationfactor = oddsTeamA;
+                    multiplicationfactor = getOddsA(eventId);
                 } else {
-                    multiplicationfactor = oddsTeamB;
+                    multiplicationfactor = getOddsB(eventId);
                 }
-                uint am = eventToBets[eventId][0].amount;
-                uint add = multiplicationfactor.mul(am);
-                address user = eventToBets[eventId][0].user;
-                userTokenBal[user]
-                    .balanceAvailable = userTokenBal[msg.sender]
-                    .balanceAvailable
-                    .add(add
-                        );
-                userTokenBal[eventToBets[eventId][0].user]
-                    .ongoingBetAmount = userTokenBal[msg.sender]
-                    .ongoingBetAmount
-                    .sub(eventToBets[eventId][0].amount);
+                userTokenBal[eventToBets[eventId][0].user].balanceAvailable = userTokenBal[msg.sender].balanceAvailable.add((multiplicationfactor * eventToBets[eventId][0].amount).div(100));
+                userTokenBal[eventToBets[eventId][0].user].ongoingBetAmount = userTokenBal[msg.sender].ongoingBetAmount.sub(eventToBets[eventId][0].amount);
             }
         }
 
