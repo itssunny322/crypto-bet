@@ -101,9 +101,7 @@ const Home = () => {
       signer
     )
     const event = await betContract.getEvent(eventId)
-    const eventDetails = await betOracleContract.getEventDetails(eventId)
     console.log('Event:', event)
-    console.log('Event Details:', eventDetails)
   }  
 
   // listen for account changes
@@ -133,8 +131,10 @@ const Home = () => {
         <ul>
           {allBettableEvents.map((event) => {
             return (
-              <li key={event.id}>
-                <button onClick={() => showEventDetails(event.id)}>
+              <li key={event}> 
+                <h3>{event} </h3>
+                <button onClick={() => showEventDetails(event)}>
+                Click here to get details
                   {event.name}
                   {event.id}
                   {event.date}
@@ -143,7 +143,6 @@ const Home = () => {
                   {event.outcome}
                   {event.winner}
                 </button>
-
               </li>
             )
           })}
