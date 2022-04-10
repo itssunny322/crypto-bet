@@ -1,14 +1,21 @@
 import React, { useState } from 'react'
 import { ethers } from 'ethers'
 
+import DAIABI from '../abis/DAI.json'
+import BetABI from '../abis/Bet.json'
+import BetOracleABI from '../abis/BetOracle.json'
+
 
 const Home = () => {
   const [errorMessage, setErrorMessage] = useState(null)
   const [defaultAccount, setDefaultAccount] = useState(null)
   const [userBalance, setUserBalance] = useState(null)
+  const [userDAIbalance, setuserDAIbalance] = useState(null)
   const [connButtonText, setConnButtonText] = useState('Connect Wallet')
-  const poolContractAddress = process.env.REACT_APP_POOL_CONTRACT_ADDRESS
-  const daiContractAddress = process.env.REACT_APP_DAI_CONTRACT_ADDRESS
+  const DAIContractAddress = process.env.REACT_APP_DAI_CONTRACT_ADDRESS
+  const BetContractAddress = process.env.REACT_APP_Bet_CONTRACT_ADDRESS
+  const BetOracleContractAddress = process.env.REACT_APP_BetOracle_CONTRACT_ADDRESS
+
 
   const connectWalletHandler = async () => {
     if (window.ethereum && window.ethereum.isMetaMask) {
@@ -20,9 +27,7 @@ const Home = () => {
           setDefaultAccount(result[0])
           setConnButtonText('Wallet Connected')
           getAccountBalance(result[0])
-          getDepositorInfo()
-          getBorrowerInfo()
-          getLoansInfo()
+          showBalance()
         })
         .catch((error) => {
           setErrorMessage(error.message)
@@ -54,6 +59,21 @@ const Home = () => {
     window.location.reload()
   }
 
+  const showBalance = async () => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum)
+    await provider.send('eth_requestAccounts', [])
+    const signer = provider.getSigner()
+    const signerAddress = await signer.getAddress()
+    console.log('Account:', signerAddress)
+    const daiContract = new ethers.Contract(DAIContractAddress, DAIABI, signer)
+    const balance = await daiContract.balanceOf(signerAddress)
+    setuserDAIbalance(ethers.utils.formatEther(balance))
+    console.log('Balance:', balance)
+  }
+
+  console.log(showBalance)
+  
+
   // listen for account changes
   window.ethereum.on('accountsChanged', accountChangedHandler)
 
@@ -69,6 +89,9 @@ const Home = () => {
         </div>
         <div className="balanceDisplay">
           <h3>Balance (Eth): {userBalance}</h3>
+        </div>
+        <div className="balanceDisplay">
+          <h3>Balance (DAI): {userDAIbalance}</h3>
         </div>
       </div>
     </div>

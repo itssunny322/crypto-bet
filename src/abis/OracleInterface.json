@@ -1,0 +1,158 @@
+[
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_eventId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "eventExists",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPendingEvents",
+      "outputs": [
+        {
+          "internalType": "bytes32[]",
+          "name": "",
+          "type": "bytes32[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAllSportEvents",
+      "outputs": [
+        {
+          "internalType": "bytes32[]",
+          "name": "",
+          "type": "bytes32[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_eventId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getEvent",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "id",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "teamAname",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "teamBname",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "date",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum OracleInterface.EventOutcome",
+          "name": "outcome",
+          "type": "uint8"
+        },
+        {
+          "internalType": "int8",
+          "name": "winner",
+          "type": "int8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "_pending",
+          "type": "bool"
+        }
+      ],
+      "name": "getLatestEvent",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "id",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "teamAname",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "teamBname",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "date",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum OracleInterface.EventOutcome",
+          "name": "outcome",
+          "type": "uint8"
+        },
+        {
+          "internalType": "int8",
+          "name": "winner",
+          "type": "int8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "testConnection",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ]
