@@ -24,6 +24,7 @@ const Home = () => {
 
   useEffect(() => {
     showBettableEvents();
+    localStorage.setItem("account",defaultAccount)
     for (let i = 0; i < allBettableEvents.length; i++) {
       showEventDetails(allBettableEvents[i]);
     }

@@ -32,6 +32,7 @@
   "author": "Sunny & siddharth",
   "license": "ISC",
   "devDependencies": {
+    "react-router-dom": "^6.3.0",
     "truffle": "^5.5.9"
   },
   "browserslist": {
