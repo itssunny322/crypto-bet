@@ -21,10 +21,11 @@ const Home = () => {
 
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = provider.getSigner();
+  //localStorage.setItem("signer",signer)
 
   useEffect(() => {
-    showBettableEvents();
-    localStorage.setItem("account",defaultAccount)
+    showBettableEvents();  
+    localStorage.setItem("account", defaultAccount);
     for (let i = 0; i < allBettableEvents.length; i++) {
       showEventDetails(allBettableEvents[i]);
     }
@@ -103,7 +104,7 @@ const Home = () => {
     );
     const event = await betContract.getEvent(eventId);
     //setArray(oldArray => [...oldArray,newValue] );
-    setEventDetail(eventDetail => [...eventDetail, event]);
+    setEventDetail((eventDetail) => [...eventDetail, event]);
   };
 
   // listen for account changes
@@ -137,20 +138,34 @@ const Home = () => {
                 <th scope="col">Category</th>
                 <th scope="col">Teams</th>
                 <th scope="col">Bet</th>
+                <th scope="col"></th>
               </tr>
             </thead>
             <tbody>
-   {eventDetail.map(e =>{
-     return(
-      <tr key={e.eventId}>
-     
-      <td>{e.name}</td>
-      <td>{e.teamAname} VS {e.teamBname}</td>
-      <td><button className="btn btn-success">Bet</button></td>
-    </tr>
-     )
-   })}
-    </tbody>
+              {eventDetail.map((e) => {
+                return (
+                  <tr key={e.eventId}>
+                    <td>{e.name}</td>
+                    <td>
+                      {e.teamAname} VS {e.teamBname}
+                    </td>
+                    <td>
+                      <button className="btn btn-success" onClick={()=>{window.location.href="/bet/"+e.id}}>Bet</button>
+                    </td>
+                    <td>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          window.location.href= "/detail/" +e.id  
+                        }}
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
           </table>
         </ul>
       </div>
