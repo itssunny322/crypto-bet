@@ -4,7 +4,6 @@ import { ethers } from "ethers";
 
 import DAIABI from "../abis/DAI.json";
 import BetABI from "../abis/Bet.json";
-import BetOracleABI from "../abis/BetOracle.json";
 
 export default function () {
     const [amount,setamount]=useState(0)
@@ -19,8 +18,6 @@ export default function () {
 
     const DAIContractAddress = process.env.REACT_APP_DAI_CONTRACT_ADDRESS;
     const BetContractAddress = process.env.REACT_APP_Bet_CONTRACT_ADDRESS;
-    const BetOracleContractAddress =
-      process.env.REACT_APP_BetOracle_CONTRACT_ADDRESS;
 
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const signer = provider.getSigner();
@@ -78,6 +75,7 @@ export default function () {
       console.log("undefined")
   }
   else{
+    console.log("everything is defined")
       setDepositedAmount(parseInt((accountDetails[0]._hex).slice(2), 16))
       setBalanceAvailable(parseInt((accountDetails[1]._hex).slice(2), 16))
       setBalanceLost(parseInt((accountDetails[2]._hex).slice(2), 16))
@@ -121,7 +119,6 @@ export default function () {
     </tr>
   </tbody>
 </table>
-
     </div>
   );
 }
