@@ -77,10 +77,10 @@ export default function () {
   else{
     console.log("everything is defined")
       setDepositedAmount(parseInt((accountDetails[0]._hex).slice(2), 16))
-      setBalanceAvailable(parseInt((accountDetails[1]._hex).slice(2), 16))
-      setBalanceLost(parseInt((accountDetails[2]._hex).slice(2), 16))
+      setOngoingBetAmount(parseInt((accountDetails[1]._hex).slice(2), 16))
+      setBalanceAvailable(parseInt((accountDetails[2]._hex).slice(2), 16))
       setBalanceWithdrawn(parseInt((accountDetails[3]._hex).slice(2), 16))
-      setOngoingBetAmount(parseInt((accountDetails[4]._hex).slice(2), 16))
+      setBalanceLost(parseInt((accountDetails[4]._hex).slice(2), 16))
 
   }
 }
