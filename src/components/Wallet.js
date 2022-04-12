@@ -19,7 +19,6 @@ export default function () {
     const DAIContractAddress = process.env.REACT_APP_DAI_CONTRACT_ADDRESS;
     const BetContractAddress = process.env.REACT_APP_Bet_CONTRACT_ADDRESS;
 
-
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const signer = provider.getSigner();
     useEffect(()=>{
@@ -88,7 +87,9 @@ export default function () {
 
 
   return (
+
     <div className="depositCard">
+
       <h3>Deposit DAI</h3>
       <input type="number" placeholder="Amount in Wei"  onChange={(e)=>{setamount(e.target.value )}}/>
       <select onChange={(e)=>mode(e)} style={{height: 30}}>
