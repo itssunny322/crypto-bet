@@ -68,6 +68,11 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 amount; // bet amount
         int8 chosenWinner; // Index of the team that will win according to the player
     }
+    struct UserBet{
+        bytes32 eventId;
+        uint256 amount;
+        int8 team;
+    }
 
     struct AmountonBet {
         uint256 totalAmountOnTeamA;
@@ -93,7 +98,9 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 balanceLost;
     }
 
-    mapping(address => mapping (address => uint) ) public allTokenBalance;
+    mapping (address => uint)  public allTokenBalance;
+    mapping(address=>uint256)public userBetCount;
+    mapping(address=>UserBet[])public userBets;
 
     /**
      * @notice mapping from user address to user bal info.
@@ -177,7 +184,7 @@ contract Bet is Ownable, ReentrancyGuard {
 
     /**
      * @return oddsTeamA the odds on TeamA
-     */ 
+     */
     function getOddsA(bytes32 eventId)
         public
         view
@@ -254,7 +261,7 @@ contract Bet is Ownable, ReentrancyGuard {
         );
         userTokenBal[msg.sender] = newDeposit;
 
-        allTokenBalance[msg.sender][tokenAddress] = allTokenBalance[msg.sender][tokenAddress]+_amount;
+        allTokenBalance[tokenAddress] = allTokenBalance[tokenAddress].add(_amount);
         IERC20(tokenAddress).transferFrom(msg.sender, address(this), _amount);
     }
 
@@ -452,10 +459,74 @@ contract Bet is Ownable, ReentrancyGuard {
         userTokenBal[msg.sender].ongoingBetAmount = userTokenBal[msg.sender]
             .ongoingBetAmount
             .add(_amount);
+        UserBet memory bet = UserBet(_eventId,_amount,_chosenWinner);
+        userBetCount[msg.sender]+=1;
+        userBets[msg.sender][userBetCount[msg.sender]] = bet;
 
         // add the mapping
         bytes32[] storage userBets = userToBets[msg.sender];
         userBets.push(_eventId);
+
+        emit BetPlaced(
+            _eventId,
+            msg.sender, // player
+            _chosenWinner,
+            _amount // bet amount
+        );
+    }
+
+        /**
+     * @notice places a bet on the given event
+     * @param _eventId      id of the sport event on which to bet
+     * @param _chosenWinner index of the supposed winner team
+     */
+    function flashBet(
+        bytes32 _eventId,
+        int8 _chosenWinner,
+        uint256 _amount,
+        address tokenAddress
+    ) public payable notAddress0(msg.sender) nonReentrant {
+        // At least a minimum amout is required to bet
+        // require(msg.value >= minimumBet, "Bet amount must be >= minimum bet");
+
+        // // Make sure this is sport event exists (ie. already registered in the Oracle)
+        require(betOracle.eventExists(_eventId), "Specified event not found");
+
+        // The chosen winner must fall within the defined number of participants for this event
+        require(
+            _betIsValid(msg.sender, _eventId, _chosenWinner),
+            "Bet is not valid"
+        );
+
+        // Event must still be open for betting
+        require(_eventOpenForBetting(_eventId), "Event not open for betting");
+
+        // Amount must be greater than 0
+        require(_amount > 0, "Amount must be greater than 0");
+
+        if (_chosenWinner == 0) {
+            userBet[_eventId].totalAmountOnTeamA = userBet[_eventId]
+                .totalAmountOnTeamA
+                .add(_amount);
+        } else {
+            userBet[_eventId].totalAmountOnTeamB = userBet[_eventId]
+                .totalAmountOnTeamB
+                .add(_amount);
+        }
+
+        // add the new bet
+        Bet[] storage bets = eventToBets[_eventId];
+        bets.push(Bet(msg.sender, _eventId, _amount, _chosenWinner));
+
+        userTokenBal[msg.sender].ongoingBetAmount = userTokenBal[msg.sender]
+            .ongoingBetAmount
+            .add(_amount);
+
+        // add the mapping
+        bytes32[] storage userBets = userToBets[msg.sender];
+        userBets.push(_eventId);
+
+        deposit(tokenAddress,_amount);
 
         emit BetPlaced(
             _eventId,
@@ -472,8 +543,8 @@ contract Bet is Ownable, ReentrancyGuard {
         userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender]
             .balanceAvailable
             .sub(amount);
-        allTokenBalance[msg.sender][tokenAddress] = allTokenBalance[msg.sender][tokenAddress].sub(amount);
-        Dai.transfer(msg.sender, amount);
+        allTokenBalance[tokenAddress] = allTokenBalance[tokenAddress].sub(amount);
+        IERC20(tokenAddress).transfer(msg.sender, amount);
         return true;
     }
 
