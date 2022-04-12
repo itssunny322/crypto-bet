@@ -18,18 +18,22 @@ export default function Bet() {
     process.env.REACT_APP_BetOracle_CONTRACT_ADDRESS;
 
   const provider = new ethers.providers.Web3Provider(window.ethereum);
-  const signer = localStorage.getItem("signer")
+  const signer = provider.getSigner();
 
   const id = useParams();
 
   useEffect(() => {
     async function getEvent(id) {
+      console.log(id);
+      console.log(signer);
       const betContract = new ethers.Contract(
         BetContractAddress,
         BetABI,
         signer
       );
+      console.log(betContract);
       const event = await betContract.getEvent(id);
+      console.log(event);
       setevent(event);
     }
     getEvent(id.id);

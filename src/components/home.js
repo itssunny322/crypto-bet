@@ -21,11 +21,12 @@ const Home = () => {
 
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = provider.getSigner();
-  //localStorage.setItem("signer",signer)
+  localStorage.setItem("signer",signer)
 
   useEffect(() => {
     showBettableEvents();  
     localStorage.setItem("account", defaultAccount);
+    console.log(signer);
     for (let i = 0; i < allBettableEvents.length; i++) {
       showEventDetails(allBettableEvents[i]);
     }
