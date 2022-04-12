@@ -79,6 +79,9 @@ contract Bet is Ownable, ReentrancyGuard {
 
     // mapping from token address to bool
     mapping(address => bool) public tokenRegistered;
+
+    address [] public registeredTokens;
+
     /**
      * @dev payload of user balance and bets
      */
@@ -89,6 +92,9 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 balancewithdrawn;
         uint256 balanceLost;
     }
+
+    mapping(address => mapping (address => uint) ) public allTokenBalance;
+
     /**
      * @notice mapping from user address to user bal info.
      */
@@ -125,6 +131,8 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 _amount
     );
 
+    uint tokenCount = 0;
+
     /**
      * @param _tokenAddress the address of the deployed ERC20 DAI token
      */
@@ -147,7 +155,17 @@ contract Bet is Ownable, ReentrancyGuard {
     {
         require(tokenRegistered[tokenAddress] == false, "already registered");
         tokenRegistered[tokenAddress] = true;
+        tokenCount+=1;
+        registeredTokens[tokenCount] = tokenAddress;
         return true;
+    }
+
+    /**
+     *
+     *
+     */
+    function registerTokens() public view returns (address [] memory){
+        return registeredTokens;
     }
 
     /**
@@ -171,12 +189,18 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 currentoddsTeamB;
         totalAmountPlacedTeamA1 = userBet[eventId].totalAmountOnTeamA;
         totalAmountPlacedTeamB1 = userBet[eventId].totalAmountOnTeamB;
-        currentoddsTeamA = totalAmountPlacedTeamA1.mul(100).div(
-            totalAmountPlacedTeamB1
+        if (totalAmountPlacedTeamA1 == 0 && totalAmountPlacedTeamB1 == 0){
+            currentoddsTeamA = 1;
+            currentoddsTeamB = 1;
+        }
+        else {
+            currentoddsTeamA = totalAmountPlacedTeamA1.mul(100).div(
+                totalAmountPlacedTeamB1
+            );
+            currentoddsTeamB = totalAmountPlacedTeamB1.mul(100).div(
+                totalAmountPlacedTeamA1
         );
-        currentoddsTeamB = totalAmountPlacedTeamB1.mul(100).div(
-            totalAmountPlacedTeamA1
-        );
+        }
         return (currentoddsTeamA);
     }
 
@@ -229,6 +253,8 @@ contract Bet is Ownable, ReentrancyGuard {
             0
         );
         userTokenBal[msg.sender] = newDeposit;
+
+        allTokenBalance[msg.sender][tokenAddress] = allTokenBalance[msg.sender][tokenAddress]+_amount;
         IERC20(tokenAddress).transferFrom(msg.sender, address(this), _amount);
     }
 
@@ -442,10 +468,11 @@ contract Bet is Ownable, ReentrancyGuard {
     /**
      * @notice send winner price
      */
-    function withdrawAmount(uint256 amount) public returns (bool success) {
+    function withdrawAmount(uint256 amount,address tokenAddress) public returns (bool success) {
         userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender]
             .balanceAvailable
             .sub(amount);
+        allTokenBalance[msg.sender][tokenAddress] = allTokenBalance[msg.sender][tokenAddress].sub(amount);
         Dai.transfer(msg.sender, amount);
         return true;
     }
