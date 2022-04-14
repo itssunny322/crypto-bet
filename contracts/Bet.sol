@@ -138,7 +138,7 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 _amount
     );
 
-    uint tokenCount = 0;
+    uint public tokenCount = 0;
 
     /**
      * @param _tokenAddress the address of the deployed ERC20 DAI token
@@ -155,15 +155,15 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param tokenAddress address of token
      * @return success true if success
      */
-    function registerToken(address tokenAddress)
+    function registerNewToken(address tokenAddress)
         public
         onlyOwner
         returns (bool success)
     {
         require(tokenRegistered[tokenAddress] == false, "already registered");
         tokenRegistered[tokenAddress] = true;
-        tokenCount+=1;
-        registeredTokens[tokenCount] = tokenAddress;
+        registeredTokens.push(tokenAddress);
+        // tokenCount=tokenCount.add(1);
         return true;
     }
 
@@ -171,7 +171,7 @@ contract Bet is Ownable, ReentrancyGuard {
      *
      *
      */
-    function registerTokens() public view returns (address [] memory){
+    function registerdTokens() public view returns (address [] memory){
         return registeredTokens;
     }
 
