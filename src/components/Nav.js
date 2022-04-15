@@ -25,6 +25,9 @@ export default function Nav() {
           <a class="nav-item nav-link" href="#" onClick={()=>{window.location.href ="/wallet"}}>
            Wallet
           </a>
+          <a class="nav-item nav-link" href="#" onClick={()=>{window.location.href ="/store"}}>
+           Store
+          </a>
           <a class="nav-item nav-link" href="#">
           Bet History
           </a>

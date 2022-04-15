@@ -225,12 +225,18 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 currentoddsTeamB;
         totalAmountPlacedTeamA1 = userBet[eventId].totalAmountOnTeamA;
         totalAmountPlacedTeamB1 = userBet[eventId].totalAmountOnTeamB;
-        currentoddsTeamA = totalAmountPlacedTeamA1.mul(100).div(
-            totalAmountPlacedTeamB1
+        if (totalAmountPlacedTeamA1 == 0 && totalAmountPlacedTeamB1 == 0){
+            currentoddsTeamA = 1;
+            currentoddsTeamB = 1;
+        }
+        else {
+            currentoddsTeamA = totalAmountPlacedTeamA1.mul(100).div(
+                totalAmountPlacedTeamB1
+            );
+            currentoddsTeamB = totalAmountPlacedTeamB1.mul(100).div(
+                totalAmountPlacedTeamA1
         );
-        currentoddsTeamB = totalAmountPlacedTeamB1.mul(100).div(
-            totalAmountPlacedTeamA1
-        );
+        }
         return (currentoddsTeamB);
     }
 

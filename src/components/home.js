@@ -86,14 +86,10 @@ const Home = () => {
 
   const showBettableEvents = async () => {
     const betContract = new ethers.Contract(BetContractAddress, BetABI, signer);
-    const betOracleContract = new ethers.Contract(
-      BetOracleContractAddress,
-      BetOracleABI,
-      signer
-    );
     const events = await betContract.getBettableEvents();
-    //console.log("Events:", events);
+    console.log(events)
     setAllBettableEvents(events);
+    
   };
 
   const showEventDetails = async (eventId) => {
