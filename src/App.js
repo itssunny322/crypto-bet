@@ -6,6 +6,7 @@ import Wallet from './components/Wallet';
 import MatchDetail from './components/MatchDetail';
 import Bet from './components/Bet';
 import Store from './components/Store';
+import AdminPage from './components/AdminPage';
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
       <Route path="/detail/:id" element={<MatchDetail/>}></Route>
       <Route path="/bet/:id" element={<Bet/>}></Route>
       <Route path="/store" element={<Store/>}></Route>
+      <Route path="/admin-page" element={<AdminPage/>}></Route>
     </Routes>
     </BrowserRouter>
     </div>
