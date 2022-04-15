@@ -29,11 +29,15 @@ export default function AddToken() {
   return (
     <div>
         <h3>Register token</h3>
-        <div>
+        <div style={{border:'1px solid black'}} className='container'>
+        <br/>
             <form>
                 <input placeholder='Enter token address' onChange={(e)=>{setAddress(e.target.value)}}/>
             </form>
+            <br/>
             <button className='btn btn-primary' onClick={()=>{handleClick(address)}}>Add</button>
+            <br/>
+            <br/>
         </div>
     </div>
   )
