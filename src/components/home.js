@@ -112,6 +112,7 @@ const Home = () => {
   return (
     <div className="home">
       <h1>Circle Bet</h1>
+      <h1>{BetContractAddress}</h1>
 
       <div className="walletCard">
         <button onClick={connectWalletHandler}>{connButtonText}</button>
