@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes ,Route} from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import './App.css';
 import Home from './components/home';
 import Nav from './components/Nav';
@@ -9,20 +9,23 @@ import Store from './components/Store';
 import AdminPage from './components/AdminPage';
 
 
+
 function App() {
   return (
     <div className="App">
+    
+      <Router>
       <Nav/>
-    <BrowserRouter>
-    <Routes >
-      <Route path="/" element={<Home />}></Route>
-      <Route path="/wallet" element ={<Wallet/>}></Route>
-      <Route path="/detail/:id" element={<MatchDetail/>}></Route>
-      <Route path="/bet/:id" element={<Bet/>}></Route>
-      <Route path="/store" element={<Store/>}></Route>
-      <Route path="/admin-page" element={<AdminPage/>}></Route>
-    </Routes>
-    </BrowserRouter>
+        <Routes>
+        <Route path="/" element={<Home/>} />
+        <Route path="/wallet" element={<Wallet/>} />
+        <Route path="/match/:id" element={<MatchDetail/>} />
+        <Route path="/bet/:id" element={<Bet/>} />
+        <Route path="/detail/:id" element={<MatchDetail/>} />
+        <Route path="/store" element={<Store/>} />
+        <Route path="/admin" element={<AdminPage/>} />
+      </Routes>
+    </Router>
     </div>
   );
 }

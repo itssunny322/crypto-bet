@@ -13,6 +13,9 @@ export default function () {
     const [balanceAvailable,setBalanceAvailable]=useState(0)
     const [balanceWithdrawn,setBalanceWithdrawn]=useState(0)
     const [ongoingBetAmount,setOngoingBetAmount]=useState(0)
+    const [tokens, setTokens] = useState([]);
+    const [selectToken, setselectedtoken] = useState();
+
 
     const factor = 1000000000000000000;
 
@@ -36,8 +39,21 @@ export default function () {
         }
         getDetail();
         setBalanceDetails();
+        getTokens();
 
     },[])
+
+    const getTokens = async () => {
+      const betContract = new ethers.Contract(BetContractAddress, BetABI, signer);
+      const tokensnames = [];
+      const tokens = await betContract.registerdTokens();
+      for(let i=0;i<tokens.length;i++){
+        const daiContract = new ethers.Contract(tokens[i], DAIABI, signer);
+        const name = await daiContract.name();
+        tokensnames.push(name);
+      }
+      setTokens(tokensnames);
+    };    
 
   const depositHandler = async (amount) => {
     let toWei = ethers.utils.formatEther(amount)

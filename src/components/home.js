@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
+import { Link } from "react-router-dom";
+
 import DAIABI from "../abis/DAI.json";
 import BetABI from "../abis/Bet.json";
 import BetOracleABI from "../abis/BetOracle.json";
@@ -112,8 +114,6 @@ const Home = () => {
   return (
     <div className="home">
       <h1>Circle Bet</h1>
-      <h1>{BetContractAddress}</h1>
-
       <div className="walletCard">
         <button onClick={connectWalletHandler}>{connButtonText}</button>
         <div className="accountDisplay">
@@ -148,16 +148,14 @@ const Home = () => {
                       {e.teamAname} VS {e.teamBname}
                     </td>
                     <td>
-                      <button className="btn btn-success" onClick={()=>{window.location.href="/bet/"+e.id}}>Bet</button>
+                      <button className="btn btn-success"><Link to={"/bet/"+e.id} className="btn btn-success" >Bet</Link></button>
                     </td>
                     <td>
                       <button
-                        className="btn btn-secondary"
-                        onClick={() => {
-                          window.location.href= "/detail/" +e.id  
-                        }}
-                      >
+                        className="btn btn-secondary">
+                        <Link to ={"/detail/" +e.id} className="btn btn-secondary">
                         View Details
+                        </Link>
                       </button>
                     </td>
                   </tr>

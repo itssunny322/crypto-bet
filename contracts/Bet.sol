@@ -404,6 +404,18 @@ contract Bet is Ownable, ReentrancyGuard {
     }
 
     /**
+     * @notice returns the users bet history
+     */
+    function fetchBetHistory() public view returns (UserBet[] memory) {
+        UserBet[] memory myBet = new UserBet[](userBetCount[msg.sender]);
+        for (uint256 i = 0; i < userBetCount[msg.sender]; i++) {
+            UserBet memory bet = userBets[msg.sender][i];
+            myBet[i] = bet;
+        }
+        return myBet;
+    }
+
+    /**
      * @notice places a bet on the given event
      * @param _eventId      id of the sport event on which to bet
      * @param _chosenWinner index of the supposed winner team

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ethers, wordlists } from "ethers";
+import { Link } from "react-router-dom";
 
 import DAIABI from "../abis/DAI.json";
 import BetABI from "../abis/Bet.json";
@@ -63,30 +64,13 @@ export default function MatchDetail(props) {
             <td>{event.teamAname} VS {event.teamBname}</td>
             <td>{oddA}</td>
             <td>{oddB}</td>
-            <td><button className="btn btn-success" onClick={()=>{window.location.href="/bet/"+event.id}}>Bet</button></td>
+            <button className="btn btn-success"><Link to={"/bet/"+event.id} className="btn btn-success" >Bet</Link></button>
         </tr>
         
       </tbody>
     </table>
       }
-      {/* <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Category</th>
-            <th scope="col">Teams</th>
-            <th scope="col">oddA</th>
-            <th scope="col">oddB</th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>{event.name}</tr>
-          <tr>{event.teamAname}</tr>
-          <tr>{event.teamBname}</tr>
-          <tr>{oddA}</tr>
-          <tr>{oddB}</tr>
-        </tbody>
-      </table> */}
+
     </div>
   );
 }

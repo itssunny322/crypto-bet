@@ -33,7 +33,6 @@ export default function Bet() {
         BetABI,
         signer
       );
-      console.log(betContract);
       const event = await betContract.getEvent(id);
       console.log(event);
       setevent(event);
@@ -48,9 +47,7 @@ export default function Bet() {
         BetABI,
         signer
       );
-      console.log(signer)
       const bet = await betContract.placeBet(id,team,amount)
-      console.log(bet)
 
   }
 
@@ -69,12 +66,10 @@ export default function Bet() {
     const betContract = new ethers.Contract(BetContractAddress, BetABI, signer);
     const tokensnames = [];
     const tokens = await betContract.registerdTokens();
-    console.log(tokens);
     for(let i=0;i<tokens.length;i++){
       const daiContract = new ethers.Contract(tokens[i], DAIABI, signer);
       const name = await daiContract.name();
       tokensnames.push(name);
-      console.log(name);
     }
     setTokens(tokensnames);
   };    
