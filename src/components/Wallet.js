@@ -72,10 +72,9 @@ export default function () {
   };
 
   const WithdrawHandler = async(amount)=>{
-      const daiContract = new ethers.Contract(DAIContractAddress, DAIABI, signer);
-      const betContract = new ethers.Contract(BetContractAddress, BetABI, signer);
-      const tx = await betContract.withdrawAmount(amount);
-
+    const betContract = new ethers.Contract(BetContractAddress, BetABI, signer);
+    const registeredtokens = await betContract.registerdTokens();
+    const tx = await betContract.withdrawAmount(amount,registeredtokens[selectToken]);
   }
   const mode=(e)=>{
       if(e.target.value ==="Deposit"){
