@@ -57,9 +57,9 @@ export default function Bet() {
         BetABI,
         signer
       );
-      console.log(id,team,amount,selectToken)
-      const bet = await betContract.flashBet(id,team,amount,selectToken)
-      console.log(bet)
+      const registeredtokens = await betContract.registerdTokens();
+      console.log(id,team,amount,registeredtokens[selectToken])
+      const bet = await betContract.flashBet(id,team,amount,registeredtokens[selectToken])
     }
 
   const getTokens = async () => {

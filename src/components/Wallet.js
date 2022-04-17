@@ -57,12 +57,18 @@ export default function () {
 
   const depositHandler = async (amount) => {
     let toWei = ethers.utils.formatEther(amount)
-    const daiContract = new ethers.Contract(DAIContractAddress, DAIABI, signer);
+    const betContract = new ethers.Contract(
+      BetContractAddress,
+      BetABI,
+      signer
+    );
+    const registeredtokens = await betContract.registerdTokens();
+
+    const daiContract = new ethers.Contract(registeredtokens[selectToken], DAIABI, signer);
     const approvetx = await daiContract.approve(BetContractAddress,amount );
     await approvetx.wait();
 
-    const betContract = new ethers.Contract(BetContractAddress, BetABI, signer);
-    const tx = await betContract.deposit(DAIContractAddress, amount);
+    const tx = await betContract.deposit(registeredtokens[selectToken], amount);
   };
 
   const WithdrawHandler = async(amount)=>{
@@ -91,7 +97,6 @@ export default function () {
       console.log("undefined")
   }
   else{
-    console.log("everything is defined")
       setDepositedAmount(parseInt((accountDetails[0]._hex).slice(2), 16))
       setOngoingBetAmount(parseInt((accountDetails[1]._hex).slice(2), 16))
       setBalanceAvailable(parseInt((accountDetails[2]._hex).slice(2), 16))
@@ -108,12 +113,18 @@ export default function () {
 
       <h3>Deposit DAI</h3>
       <input type="number" placeholder="Amount in Wei"  onChange={(e)=>{setamount(e.target.value )}}/>
+      <lebel>Select Token:</lebel>
+      <select onChange={(e)=>{setselectedtoken(e.target.value)}}>
+        <option> Select a token</option>
+        {tokens.map((token,index)=>{
+          return <option value={index}>{token}</option>
+        })}
+      </select>
       <select onChange={(e)=>mode(e)} style={{height: 30}}>
           <option>Select</option>
           <option value="Deposit">Deposit</option>
           <option value="Withdraw">Withdraw</option>
       </select>
-      {/* //<button onClick={() => depositHandler(amount)}>Deposit</button> */}
       <h2 >Account Detail</h2>
       <table class="table">
   <thead>
