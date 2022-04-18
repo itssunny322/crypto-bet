@@ -31,6 +31,7 @@ const Home = () => {
     console.log(signer);
     for (let i = 0; i < allBettableEvents.length; i++) {
       showEventDetails(allBettableEvents[i]);
+      console.table(all)
     }
   }, [defaultAccount]);
 

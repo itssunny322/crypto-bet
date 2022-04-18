@@ -37,8 +37,9 @@ export default function MatchDetail(props) {
       const realvalB = b / 100;
       setOddB(realvalB);
       const event = await betOracleContract.getEvent(eventId);
-      console.log(event);
+      console.table(event);
       setevent(event);
+
     };
     showbetOdds(id.id);
   }, []);

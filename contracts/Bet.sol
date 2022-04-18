@@ -425,6 +425,18 @@ contract Bet is Ownable, ReentrancyGuard {
         int8 _chosenWinner,
         uint256 _amount
     ) public payable notAddress0(msg.sender) nonReentrant {
+        uint blockNum = block.number;
+        (
+            bytes32 id,
+            string memory name,
+            string memory teamAname,
+            string memory teamBname,
+            uint256 date,
+            OracleInterface.EventOutcome outcome,
+            int8 winner
+        ) = getEvent((_eventId));
+        require(blockNum< date,"Too late to bet");
+        
         // At least a minimum amout is required to bet
         // require(msg.value >= minimumBet, "Bet amount must be >= minimum bet");
 
@@ -556,6 +568,9 @@ contract Bet is Ownable, ReentrancyGuard {
         userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender]
             .balanceAvailable
             .sub(amount);
+         userTokenBal[msg.sender].balancewithdrawn = userTokenBal[msg.sender]
+            .balancewithdrawn
+            .add(amount);    
         allTokenBalance[tokenAddress] = allTokenBalance[tokenAddress].sub(
             amount
         );
