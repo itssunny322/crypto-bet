@@ -150,8 +150,6 @@ contract Bet is Ownable, ReentrancyGuard {
         setOracleAddress(_oracleAddress);
     }
 
-   
-
     /**
      * @notice register token
      * @param tokenAddress address of token
@@ -315,16 +313,12 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param _eventId id of a event
     
      */
-    function _betIsValid(
-        
-        bytes32 _eventId
-        
-    ) public view returns (bool) {
+    function _betIsValid(bytes32 _eventId) public view returns (bool) {
         // if (userToBets[_user].length == 0) {
         //     userToBets[_user]
         // }
-         uint256 bn = block.number;
-         (
+        uint256 bn = block.number;
+        (
             bytes32 id,
             string memory name,
             string memory teamAname,
@@ -333,7 +327,7 @@ contract Bet is Ownable, ReentrancyGuard {
             OracleInterface.EventOutcome outcome,
             int8 winner
         ) = getEvent((_eventId));
-        require(bn< date,"Too late to bet");
+        require(bn < date, "Too late to bet");
         return true;
     }
 
@@ -416,7 +410,7 @@ contract Bet is Ownable, ReentrancyGuard {
         return betOracle.getLatestEvent(true);
     }
 
-  /**
+    /**
      * @notice returns the users bet history
      */
     function fetchBetHistory() public view returns (UserBetz[] memory) {
@@ -427,7 +421,8 @@ contract Bet is Ownable, ReentrancyGuard {
         }
         return myBet;
     }
-    function getBlock()public returns(uint256){
+
+    function getBlock() public returns (uint256) {
         return block.number;
     }
 
@@ -436,10 +431,10 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param _eventId      id of the sport event on which to bet
      * @param _chosenWinner index of the supposed winner team
      */
- function placeBet(
+    function placeBet(
         bytes32 _eventId,
         int8 _chosenWinner,
-        uint _amount
+        uint256 _amount
     ) public payable notAddress0(msg.sender) nonReentrant {
         // At least a minimum amout is required to bet
         // require(msg.value >= minimumBet, "Bet amount must be >= minimum bet");
@@ -448,10 +443,7 @@ contract Bet is Ownable, ReentrancyGuard {
         require(betOracle.eventExists(_eventId), "Specified event not found");
 
         // The chosen winner must fall within the defined number of participants for this event
-        require(
-            _betIsValid( _eventId),
-            "Bet is not valid"
-        );
+        require(_betIsValid(_eventId), "Bet is not valid");
 
         // Event must still be open for betting
         require(_eventOpenForBetting(_eventId), "Event not open for betting");
@@ -475,25 +467,22 @@ contract Bet is Ownable, ReentrancyGuard {
                 .totalAmountOnTeamB
                 .add(_amount);
         }
-        
 
         // add the new bet
-         Bet[] storage bets = eventToBets[_eventId];
-         bets.push(Bet(msg.sender, _eventId, _amount, _chosenWinner));
+        Bet[] storage bets = eventToBets[_eventId];
+        bets.push(Bet(msg.sender, _eventId, _amount, _chosenWinner));
         userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender]
             .balanceAvailable
             .sub(_amount);
         userTokenBal[msg.sender].ongoingBetAmount = userTokenBal[msg.sender]
             .ongoingBetAmount
             .add(_amount);
-         UserBetz memory bet = UserBetz(_eventId, _amount, _chosenWinner);
-         userBetCount[msg.sender] = userBetCount[msg.sender].add(1);
-         userBets[msg.sender].push( bet);
+        UserBetz memory bet = UserBetz(_eventId, _amount, _chosenWinner);
+        userBetCount[msg.sender] = userBetCount[msg.sender].add(1);
+        userBets[msg.sender].push(bet);
         // add the mapping
         bytes32[] storage userBets = userToBets[msg.sender];
         userBets.push(_eventId);
-
-      
 
         emit BetPlaced(
             _eventId,
@@ -502,7 +491,6 @@ contract Bet is Ownable, ReentrancyGuard {
             _amount // bet amount
         );
     }
-
 
     /**
      * @notice places a bet on the given event
@@ -575,9 +563,9 @@ contract Bet is Ownable, ReentrancyGuard {
         userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender]
             .balanceAvailable
             .sub(amount);
-         userTokenBal[msg.sender].balancewithdrawn = userTokenBal[msg.sender]
+        userTokenBal[msg.sender].balancewithdrawn = userTokenBal[msg.sender]
             .balancewithdrawn
-            .add(amount);    
+            .add(amount);
         allTokenBalance[tokenAddress] = allTokenBalance[tokenAddress].sub(
             amount
         );

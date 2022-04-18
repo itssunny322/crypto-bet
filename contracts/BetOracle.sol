@@ -6,14 +6,11 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./OracleInterface.sol";
 
-
-
 /**
  * @title An smart-contract Oracle that register sport events, retrieve their outcomes and communicate their results when asked for.
  * @notice Collects and provides information on sport events and their outcomes
  */
 contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
-
     /**
      * @dev all the sport events
      */
@@ -22,19 +19,19 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
     /*
      * @dev map of composed {eventId (SHA3 of event key infos) => eventIndex (in events)} pairs
      */
-    mapping(bytes32 => uint) eventIdToIndex;
+    mapping(bytes32 => uint256) eventIdToIndex;
 
     /***
-      * @dev defines a sport event along with its outcome
-      */
+     * @dev defines a sport event along with its outcome
+     */
     struct SportEvent {
-        bytes32      id;
-        string       name;
-        string       teamAname;
-        string       teamBname;
-        uint         date;
+        bytes32 id;
+        string name;
+        string teamAname;
+        string teamBname;
+        uint256 date;
         EventOutcome outcome;
-        int8         winner;
+        int8 winner;
     }
 
     // FYI: enum EventOutcome is defind in OracleInterface
@@ -43,13 +40,13 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      * @dev Triggered once an event has been added
      */
     event SportEventAdded(
-        bytes32      _eventId,
-        string       name,
-        string       _teamAname,
-        string       _teamBname,
-        uint         _date,
+        bytes32 _eventId,
+        string name,
+        string _teamAname,
+        string _teamBname,
+        uint256 _date,
         EventOutcome _eventOutcome,
-        int8         _winner
+        int8 _winner
     );
 
     /**
@@ -64,13 +61,10 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
         string memory _name,
         string memory _teamAname,
         string memory _teamBname,
-        uint          _date
-    )
-        public onlyOwner nonReentrant
-        returns (bytes32)
-    {
-        uint blockNum = block.number;
-        require(blockNum< _date,"Match");
+        uint256 _date
+    ) public onlyOwner nonReentrant returns (bytes32) {
+        uint256 blockNum = block.number;
+        require(blockNum < _date, "Match time is incorrect");
         bytes memory bytesName = bytes(_name);
         require(bytesName.length > 0, "_name cannot be empty");
         // require(
@@ -79,14 +73,26 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
         // );
 
         // Hash key fields of the sport event to get a unique id
-        bytes32 eventId = keccak256(abi.encodePacked(_name, _teamAname, _teamBname, _date));
+        bytes32 eventId = keccak256(
+            abi.encodePacked(_name, _teamAname, _teamBname, _date)
+        );
 
         // Make sure that the sport event is unique and does not exist yet
-        require( !eventExists(eventId), "Event already exists");
+        require(!eventExists(eventId), "Event already exists");
 
         // Add the sport event
-        events.push( SportEvent(eventId, _name, _teamAname, _teamBname, _date, EventOutcome.Pending, -1));
-        uint newIndex           = events.length - 1;
+        events.push(
+            SportEvent(
+                eventId,
+                _name,
+                _teamAname,
+                _teamBname,
+                _date,
+                EventOutcome.Pending,
+                -1
+            )
+        );
+        uint256 newIndex = events.length - 1;
         eventIdToIndex[eventId] = newIndex + 1;
 
         emit SportEventAdded(
@@ -96,7 +102,7 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
             _teamBname,
             _date,
             EventOutcome.Pending,
-            -1                      // no winner yet
+            -1 // no winner yet
         );
 
         // Return the unique id of the new sport event
@@ -109,10 +115,7 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      * @param _eventId the sport event id to get
      * @return the array index of this event if it exists or else -1
      */
-    function _getMatchIndex(bytes32 _eventId)
-        private view
-        returns (uint)
-    {
+    function _getMatchIndex(bytes32 _eventId) private view returns (uint256) {
         return eventIdToIndex[_eventId] - 1;
     }
 
@@ -121,14 +124,11 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      * @param _eventId the id of a sport event id
      * @return true if sport event exists and its id is valid
      */
-    function eventExists(bytes32 _eventId)
-        public view override
-        returns (bool)
-    {
+    function eventExists(bytes32 _eventId) public view override returns (bool) {
         if (events.length == 0) {
             return false;
         }
-        uint index = eventIdToIndex[_eventId];
+        uint256 index = eventIdToIndex[_eventId];
         return (index > 0);
     }
 
@@ -138,25 +138,25 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      * @param _outcome outcome of the match
      * @param _winner 0-based id of the winnner
      */
-    function declareOutcome(bytes32 _eventId, EventOutcome _outcome, int8 _winner)
-        onlyOwner external
-    {
+    function declareOutcome(
+        bytes32 _eventId,
+        EventOutcome _outcome,
+        int8 _winner
+    ) external onlyOwner {
         // Require that it exists
         require(eventExists(_eventId));
 
         // Get the event
-        uint index = _getMatchIndex(_eventId);
+        uint256 index = _getMatchIndex(_eventId);
         SportEvent storage theMatch = events[index];
 
-        if (_outcome == EventOutcome.Decided)
-            require(_winner >= 0);
+        if (_outcome == EventOutcome.Decided) require(_winner >= 0);
 
         // Set the outcome
         theMatch.outcome = _outcome;
 
         // Set the winner (if there is one)
-        if (_outcome == EventOutcome.Decided)
-            theMatch.winner = _winner;
+        if (_outcome == EventOutcome.Decided) theMatch.winner = _winner;
     }
 
     /**
@@ -164,23 +164,24 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      * @return an array of unique pending events ids
      */
     function getPendingEvents()
-        public view override
+        public
+        view
+        override
         returns (bytes32[] memory)
     {
-        uint count = 0;
+        uint256 count = 0;
 
         // Get the count of pending events
-        for (uint i = 0; i < events.length; i = i + 1) {
-            if (events[i].outcome == EventOutcome.Pending)
-                count = count + 1;
+        for (uint256 i = 0; i < events.length; i = i + 1) {
+            if (events[i].outcome == EventOutcome.Pending) count = count + 1;
         }
 
         // Collect up all the pending events
         bytes32[] memory output = new bytes32[](count);
 
         if (count > 0) {
-            uint index = 0;
-            for (uint n = events.length;  n > 0;  n = n - 1) {
+            uint256 index = 0;
+            for (uint256 n = events.length; n > 0; n = n - 1) {
                 if (events[n - 1].outcome == EventOutcome.Pending) {
                     output[index] = events[n - 1].id;
                     index = index + 1;
@@ -196,15 +197,17 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      * @return an array of unique match ids
      */
     function getAllSportEvents()
-        public view override
+        public
+        view
+        override
         returns (bytes32[] memory)
     {
         bytes32[] memory eventIds = new bytes32[](events.length);
 
         // Collect all event ids
         if (events.length > 0) {
-            uint index = 0;
-            for (uint n = events.length; n > 0; n = n - 1) {
+            uint256 index = 0;
+            for (uint256 n = events.length; n > 0; n = n - 1) {
                 eventIds[index = index + 1] = events[n - 1].id;
             }
         }
@@ -224,23 +227,32 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      * @return winner the index of the winner
      */
     function getEvent(bytes32 _eventId)
-        public view override
+        public
+        view
+        override
         returns (
-            bytes32       id,
+            bytes32 id,
             string memory name,
             string memory teamAname,
             string memory teamBname,
-            uint          date,
-            EventOutcome  outcome,
-            int8          winner
+            uint256 date,
+            EventOutcome outcome,
+            int8 winner
         )
     {
         // Get the sport event
         if (eventExists(_eventId)) {
             SportEvent storage theMatch = events[_getMatchIndex(_eventId)];
-            return (theMatch.id, theMatch.name, theMatch.teamAname, theMatch.teamBname, theMatch.date, theMatch.outcome, theMatch.winner);
-        }
-        else {
+            return (
+                theMatch.id,
+                theMatch.name,
+                theMatch.teamAname,
+                theMatch.teamBname,
+                theMatch.date,
+                theMatch.outcome,
+                theMatch.winner
+            );
+        } else {
             return (_eventId, "", "", "", 0, EventOutcome.Pending, -1);
         }
     }
@@ -258,18 +270,20 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      * @return winner the index of the winner
      */
     function getLatestEvent(bool _pending)
-        public view override
+        public
+        view
+        override
         returns (
-            bytes32         id,
-            string memory   name,
-            string memory   teamAname,
-            string memory   teamBname,
-            uint            date,
-            EventOutcome    outcome,
-            int8            winner
+            bytes32 id,
+            string memory name,
+            string memory teamAname,
+            string memory teamBname,
+            uint256 date,
+            EventOutcome outcome,
+            int8 winner
         )
     {
-        bytes32          eventId = 0;
+        bytes32 eventId = 0;
         bytes32[] memory ids;
 
         if (_pending) {
@@ -285,15 +299,11 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
         return getEvent(eventId);
     }
 
-
     /**
      * @notice gets the address of this contract
      * @return the address of the BetOracle smart-contract
      */
-    function getAddress()
-        public view
-        returns (address)
-    {
+    function getAddress() public view returns (address) {
         return address(this);
     }
 
@@ -301,11 +311,7 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
      * @notice can be used by a client contract to ensure that they've connected to this contract interface successfully
      * @return true, unconditionally
      */
-    function testConnection()
-        public pure override
-        returns (bool)
-    {
+    function testConnection() public pure override returns (bool) {
         return true;
     }
-
 }
