@@ -420,8 +420,8 @@ contract Bet is Ownable, ReentrancyGuard {
      * @notice returns the users bet history
      */
     function fetchBetHistory() public view returns (UserBetz[] memory) {
-        UserBetz[] memory myBet = new UserBetz[](userBetCount[msg.sender]-1);
-        for (uint256 i = 1; i < userBetCount[msg.sender]+1; i++) {
+        UserBetz[] memory myBet = new UserBetz[](userBetCount[msg.sender]);
+        for (uint256 i = 0; i < userBetCount[msg.sender]; i++) {
             UserBetz memory bet = userBets[msg.sender][i];
             myBet[i] = bet;
         }
@@ -486,9 +486,9 @@ contract Bet is Ownable, ReentrancyGuard {
         userTokenBal[msg.sender].ongoingBetAmount = userTokenBal[msg.sender]
             .ongoingBetAmount
             .add(_amount);
-        //UserBetz memory bet = UserBetz(_eventId, _amount, _chosenWinner);
-        // userBetCount[msg.sender] = userBetCount[msg.sender].add(1);
-        // userBets[msg.sender][userBetCount[msg.sender]] = bet;
+         UserBetz memory bet = UserBetz(_eventId, _amount, _chosenWinner);
+         userBetCount[msg.sender] = userBetCount[msg.sender].add(1);
+         userBets[msg.sender].push( bet);
         // add the mapping
         bytes32[] storage userBets = userToBets[msg.sender];
         userBets.push(_eventId);
