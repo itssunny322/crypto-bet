@@ -58,7 +58,10 @@ export default function Bet() {
         signer
       );
       const registeredtokens = await betContract.registerdTokens();
-      console.log(id,team,amount,registeredtokens[selectToken])
+      const daiContract = new ethers.Contract(registeredtokens[selectToken], DAIABI, signer);
+      const approvetx = await daiContract.approve(BetContractAddress,amount );
+      await approvetx.wait();
+
       const bet = await betContract.flashBet(id,team,amount,registeredtokens[selectToken])
     }
 
