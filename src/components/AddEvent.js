@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 
-import DAIABI from "../abis/DAI.json";
-import BetABI from "../abis/Bet.json";
 import BetOracleABI from "../abis/BetOracle.json";
 
 export default function AddEvent() {
@@ -11,10 +9,10 @@ export default function AddEvent() {
   const [teamB, setTeamB] = useState();
   const [date, setdate] = useState();
 
-  const DAIContractAddress = process.env.REACT_APP_DAI_CONTRACT_ADDRESS;
-  const BetContractAddress = process.env.REACT_APP_Bet_CONTRACT_ADDRESS;
   const BetOracleContractAddress =
     process.env.REACT_APP_BetOracle_CONTRACT_ADDRESS;
+  
+  const KovanTime = 900
 
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = provider.getSigner();
@@ -26,9 +24,13 @@ export default function AddEvent() {
         BetOracleABI,
         signer
       );
-      const res = await betOracleContract.addSportEvent(Category,teamA,teamB,date)
-      console.log(res)
-
+      var today = new Date();
+      var todayDate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate()
+      var diff = Math.abs(new Date(date) - new Date(todayDate));
+      var diffHours = Math.ceil(diff / (1000 * 3600));
+      var currentblocknumber = await provider.getBlockNumber();
+      var newBlocknum = currentblocknumber + diffHours*KovanTime;
+      const res = await betOracleContract.addSportEvent(Category,teamA,teamB,newBlocknum)
   }
   return (
     <div>
