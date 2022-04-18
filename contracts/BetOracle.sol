@@ -69,6 +69,8 @@ contract BetOracle is OracleInterface, Ownable, ReentrancyGuard {
         public onlyOwner nonReentrant
         returns (bytes32)
     {
+        uint blockNum = block.number;
+        require(blockNum< _date,"Match");
         bytes memory bytesName = bytes(_name);
         require(bytesName.length > 0, "_name cannot be empty");
         // require(

@@ -68,7 +68,7 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 amount; // bet amount
         int8 chosenWinner; // Index of the team that will win according to the player
     }
-    struct UserBet {
+    struct UserBetz {
         bytes32 eventId;
         uint256 amount;
         int8 team;
@@ -100,7 +100,7 @@ contract Bet is Ownable, ReentrancyGuard {
 
     mapping(address => uint256) public allTokenBalance;
     mapping(address => uint256) public userBetCount;
-    mapping(address => UserBet[]) public userBets;
+    mapping(address => UserBetz[]) public userBets;
 
     /**
      * @notice mapping from user address to user bal info.
@@ -149,6 +149,8 @@ contract Bet is Ownable, ReentrancyGuard {
         Dai = IERC20(_tokenAddress);
         setOracleAddress(_oracleAddress);
     }
+
+   
 
     /**
      * @notice register token
@@ -309,18 +311,29 @@ contract Bet is Ownable, ReentrancyGuard {
 
     /**
      * @notice determines whether or not the user has already bet on the given sport event
-     * @param _user address of a player
+     
      * @param _eventId id of a event
-     * @param _chosenWinner the index of the participant to bet on (to win)
+    
      */
     function _betIsValid(
-        address _user,
-        bytes32 _eventId,
-        int8 _chosenWinner
-    ) private pure returns (bool) {
+        
+        bytes32 _eventId
+        
+    ) public view returns (bool) {
         // if (userToBets[_user].length == 0) {
         //     userToBets[_user]
         // }
+         uint256 bn = block.number;
+         (
+            bytes32 id,
+            string memory name,
+            string memory teamAname,
+            string memory teamBname,
+            uint256 date,
+            OracleInterface.EventOutcome outcome,
+            int8 winner
+        ) = getEvent((_eventId));
+        require(bn< date,"Too late to bet");
         return true;
     }
 
@@ -403,16 +416,19 @@ contract Bet is Ownable, ReentrancyGuard {
         return betOracle.getLatestEvent(true);
     }
 
-    /**
+  /**
      * @notice returns the users bet history
      */
-    function fetchBetHistory() public view returns (UserBet[] memory) {
-        UserBet[] memory myBet = new UserBet[](userBetCount[msg.sender]);
-        for (uint256 i = 0; i < userBetCount[msg.sender]; i++) {
-            UserBet memory bet = userBets[msg.sender][i];
+    function fetchBetHistory() public view returns (UserBetz[] memory) {
+        UserBetz[] memory myBet = new UserBetz[](userBetCount[msg.sender]-1);
+        for (uint256 i = 1; i < userBetCount[msg.sender]+1; i++) {
+            UserBetz memory bet = userBets[msg.sender][i];
             myBet[i] = bet;
         }
         return myBet;
+    }
+    function getBlock()public returns(uint256){
+        return block.number;
     }
 
     /**
@@ -420,23 +436,11 @@ contract Bet is Ownable, ReentrancyGuard {
      * @param _eventId      id of the sport event on which to bet
      * @param _chosenWinner index of the supposed winner team
      */
-    function placeBet(
+ function placeBet(
         bytes32 _eventId,
         int8 _chosenWinner,
-        uint256 _amount
+        uint _amount
     ) public payable notAddress0(msg.sender) nonReentrant {
-        uint blockNum = block.number;
-        (
-            bytes32 id,
-            string memory name,
-            string memory teamAname,
-            string memory teamBname,
-            uint256 date,
-            OracleInterface.EventOutcome outcome,
-            int8 winner
-        ) = getEvent((_eventId));
-        require(blockNum< date,"Too late to bet");
-        
         // At least a minimum amout is required to bet
         // require(msg.value >= minimumBet, "Bet amount must be >= minimum bet");
 
@@ -445,7 +449,7 @@ contract Bet is Ownable, ReentrancyGuard {
 
         // The chosen winner must fall within the defined number of participants for this event
         require(
-            _betIsValid(msg.sender, _eventId, _chosenWinner),
+            _betIsValid( _eventId),
             "Bet is not valid"
         );
 
@@ -471,23 +475,25 @@ contract Bet is Ownable, ReentrancyGuard {
                 .totalAmountOnTeamB
                 .add(_amount);
         }
+        
 
         // add the new bet
-        Bet[] storage bets = eventToBets[_eventId];
-        bets.push(Bet(msg.sender, _eventId, _amount, _chosenWinner));
+         Bet[] storage bets = eventToBets[_eventId];
+         bets.push(Bet(msg.sender, _eventId, _amount, _chosenWinner));
         userTokenBal[msg.sender].balanceAvailable = userTokenBal[msg.sender]
             .balanceAvailable
             .sub(_amount);
         userTokenBal[msg.sender].ongoingBetAmount = userTokenBal[msg.sender]
             .ongoingBetAmount
             .add(_amount);
-        UserBet memory bet = UserBet(_eventId, _amount, _chosenWinner);
-        userBetCount[msg.sender] += 1;
-        userBets[msg.sender][userBetCount[msg.sender]] = bet;
-
+        //UserBetz memory bet = UserBetz(_eventId, _amount, _chosenWinner);
+        // userBetCount[msg.sender] = userBetCount[msg.sender].add(1);
+        // userBets[msg.sender][userBetCount[msg.sender]] = bet;
         // add the mapping
         bytes32[] storage userBets = userToBets[msg.sender];
         userBets.push(_eventId);
+
+      
 
         emit BetPlaced(
             _eventId,
@@ -496,6 +502,7 @@ contract Bet is Ownable, ReentrancyGuard {
             _amount // bet amount
         );
     }
+
 
     /**
      * @notice places a bet on the given event
@@ -515,10 +522,10 @@ contract Bet is Ownable, ReentrancyGuard {
         require(betOracle.eventExists(_eventId), "Specified event not found");
 
         // The chosen winner must fall within the defined number of participants for this event
-        require(
-            _betIsValid(msg.sender, _eventId, _chosenWinner),
-            "Bet is not valid"
-        );
+        // require(
+        //     _betIsValid(msg.sender, _eventId, _chosenWinner),
+        //     "Bet is not valid"
+        // );
 
         // Event must still be open for betting
         require(_eventOpenForBetting(_eventId), "Event not open for betting");
