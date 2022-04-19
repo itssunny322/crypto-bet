@@ -68,12 +68,19 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 amount; // bet amount
         int8 chosenWinner; // Index of the team that will win according to the player
     }
+
+    /**
+     * @dev payload of user's stake on a sport event
+     */
     struct UserBetz {
         bytes32 eventId;
         uint256 amount;
         int8 team;
     }
 
+    /**
+     * @dev payload of a bet amount on a sport event
+     */
     struct AmountonBet {
         uint256 totalAmountOnTeamA;
         uint256 totalAmountOnTeamB;
@@ -98,8 +105,11 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 balanceLost;
     }
 
+    // mapping from user address to user balance info
     mapping(address => uint256) public allTokenBalance;
+    // mapping from user address to user bet count
     mapping(address => uint256) public userBetCount;
+    // mapping from user address to userBets
     mapping(address => UserBetz[]) public userBets;
 
     /**
@@ -138,6 +148,9 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 _amount
     );
 
+    /**
+     * @dev Tracking total registered token count
+     */
     uint256 public tokenCount = 0;
 
     /**
@@ -168,8 +181,7 @@ contract Bet is Ownable, ReentrancyGuard {
     }
 
     /**
-     *
-     *
+     * @notice display all registered tokens
      */
     function registerdTokens() public view returns (address[] memory) {
         return registeredTokens;
@@ -192,6 +204,7 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 currentoddsTeamB;
         totalAmountPlacedTeamA1 = userBet[eventId].totalAmountOnTeamA;
         totalAmountPlacedTeamB1 = userBet[eventId].totalAmountOnTeamB;
+        // if no bets placed then return 1
         if (totalAmountPlacedTeamA1 == 0 || totalAmountPlacedTeamB1 == 0) {
             currentoddsTeamA = 1;
             currentoddsTeamB = 1;
@@ -216,6 +229,7 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 currentoddsTeamB;
         totalAmountPlacedTeamA1 = userBet[eventId].totalAmountOnTeamA;
         totalAmountPlacedTeamB1 = userBet[eventId].totalAmountOnTeamB;
+        // if no bets placed then return 1
         if (totalAmountPlacedTeamA1 == 0 || totalAmountPlacedTeamB1 == 0) {
             currentoddsTeamA = 1;
             currentoddsTeamB = 1;
@@ -308,15 +322,9 @@ contract Bet is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice determines whether or not the user has already bet on the given sport event
-     
-     * @param _eventId id of a event
-    
+     * @notice modifier to check if event is still open for bet
      */
     function _betIsValid(bytes32 _eventId) public view returns (bool) {
-        // if (userToBets[_user].length == 0) {
-        //     userToBets[_user]
-        // }
         uint256 bn = block.number;
         (
             bytes32 id,
@@ -328,18 +336,6 @@ contract Bet is Ownable, ReentrancyGuard {
             int8 winner
         ) = getEvent((_eventId));
         require(bn < date, "Too late to bet");
-        return true;
-    }
-
-    /**
-     * @notice determines whether or not bets may still be accepted for the given match
-     * @param _eventId id of an event
-     */
-    function _eventOpenForBetting(bytes32 _eventId)
-        private
-        pure
-        returns (bool)
-    {
         return true;
     }
 
@@ -422,10 +418,6 @@ contract Bet is Ownable, ReentrancyGuard {
         return myBet;
     }
 
-    function getBlock() public returns (uint256) {
-        return block.number;
-    }
-
     /**
      * @notice places a bet on the given event
      * @param _eventId      id of the sport event on which to bet
@@ -444,9 +436,6 @@ contract Bet is Ownable, ReentrancyGuard {
 
         // The chosen winner must fall within the defined number of participants for this event
         require(_betIsValid(_eventId), "Bet is not valid");
-
-        // Event must still be open for betting
-        require(_eventOpenForBetting(_eventId), "Event not open for betting");
 
         // Amount must be greater than 0
         require(_amount > 0, "Amount must be greater than 0");
@@ -508,15 +497,6 @@ contract Bet is Ownable, ReentrancyGuard {
 
         // // Make sure this is sport event exists (ie. already registered in the Oracle)
         require(betOracle.eventExists(_eventId), "Specified event not found");
-
-        // The chosen winner must fall within the defined number of participants for this event
-        // require(
-        //     _betIsValid(msg.sender, _eventId, _chosenWinner),
-        //     "Bet is not valid"
-        // );
-
-        // Event must still be open for betting
-        require(_eventOpenForBetting(_eventId), "Event not open for betting");
 
         // Amount must be greater than 0
         require(_amount > 0, "Amount must be greater than 0");
