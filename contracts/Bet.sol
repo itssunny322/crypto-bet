@@ -192,7 +192,7 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 currentoddsTeamB;
         totalAmountPlacedTeamA1 = userBet[eventId].totalAmountOnTeamA;
         totalAmountPlacedTeamB1 = userBet[eventId].totalAmountOnTeamB;
-        if (totalAmountPlacedTeamA1 == 0 && totalAmountPlacedTeamB1 == 0) {
+        if (totalAmountPlacedTeamA1 == 0 || totalAmountPlacedTeamB1 == 0) {
             currentoddsTeamA = 1;
             currentoddsTeamB = 1;
         } else {
@@ -207,16 +207,16 @@ contract Bet is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @return oddsTeamA the odds on TeamB
+     * @return oddsTeamB the odds on TeamB
      */
-    function getOddsB(bytes32 eventId) public view returns (uint256 oddsTeamA) {
+    function getOddsB(bytes32 eventId) public view returns (uint256 oddsTeamB) {
         uint256 totalAmountPlacedTeamA1;
         uint256 totalAmountPlacedTeamB1;
         uint256 currentoddsTeamA;
         uint256 currentoddsTeamB;
         totalAmountPlacedTeamA1 = userBet[eventId].totalAmountOnTeamA;
         totalAmountPlacedTeamB1 = userBet[eventId].totalAmountOnTeamB;
-        if (totalAmountPlacedTeamA1 == 0 && totalAmountPlacedTeamB1 == 0) {
+        if (totalAmountPlacedTeamA1 == 0 || totalAmountPlacedTeamB1 == 0) {
             currentoddsTeamA = 1;
             currentoddsTeamB = 1;
         } else {
