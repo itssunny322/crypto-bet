@@ -2,7 +2,7 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import { ethers, wordlists } from "ethers";
 
-import Loader from "./Loader";
+// import Loader from "./Loader";
 
 import DAIABI from "../abis/DAI.json";
 import BetABI from "../abis/Bet.json";
