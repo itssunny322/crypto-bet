@@ -262,12 +262,15 @@ contract Bet is Ownable, ReentrancyGuard {
         uint256 amountAvaliable = userTokenBal[msg.sender].balanceAvailable.add(
             _amount
         );
+        uint256 AmountonBet = userTokenBal[msg.sender].ongoingBetAmount;
+        uint256 balLost = userTokenBal[msg.sender].balanceLost;
+        uint256 withdrawAmount = userTokenBal[msg.sender].balancewithdrawn;
         UserBalanceInfo memory newDeposit = UserBalanceInfo(
             depositAmount,
-            0,
+            AmountonBet,
             amountAvaliable,
-            0,
-            0
+            withdrawAmount,
+            balLost
         );
         userTokenBal[msg.sender] = newDeposit;
 
