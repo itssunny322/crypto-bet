@@ -7,8 +7,9 @@ import MatchDetail from './components/MatchDetail';
 import Bet from './components/Bet';
 import Store from './components/Store';
 import AdminPage from './components/AdminPage';
-// import Loader from './components/Loader';
+import Loader from './components/Loader';
 import BetHistory from './components/BetHistory';
+
 
 
 
@@ -26,8 +27,9 @@ function App() {
         <Route path="/detail/:id" element={<MatchDetail/>} />
         <Route path="/store" element={<Store/>} />
         <Route path="/admin" element={<AdminPage/>} />
-        {/* //<Route path="/loader" element={<Loader/>} /> */}
+        <Route path="/loader" element={<Loader/>} />
         <Route path="/betHistory" element={<BetHistory/>} />
+
       </Routes>
     </Router>
     </div>

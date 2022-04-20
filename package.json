@@ -34,7 +34,9 @@
   "author": "Sunny & siddharth",
   "license": "ISC",
   "devDependencies": {
+    "node-sass": "^7.0.1",
     "react-router-dom": "^6.3.0",
+    "sass-loader": "^12.6.0",
     "truffle": "^5.5.9"
   },
   "browserslist": {
