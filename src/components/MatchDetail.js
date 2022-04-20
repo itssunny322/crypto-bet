@@ -30,7 +30,7 @@ export default function MatchDetail(props) {
       );
       const betOddsA = await betOracleContract.getOddsA(eventId);
       const a = parseInt(betOddsA._hex.slice(2), 16);
-      const realvalA = a / 100
+      const realvalA = a / 100;
       setOddA(realvalA);
       const betOddsB = await betOracleContract.getOddsB(eventId);
       const b = parseInt(betOddsB._hex.slice(2), 16);

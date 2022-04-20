@@ -2,9 +2,10 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import { ethers, wordlists } from "ethers";
 
+import Loader from "./Loader";
+
 import DAIABI from "../abis/DAI.json";
 import BetABI from "../abis/Bet.json";
-import BetOracleABI from "../abis/BetOracle.json";
 import { useEffect, useState } from "react";
 
 export default function Bet() {
@@ -13,6 +14,7 @@ export default function Bet() {
   const [amountToBet, setamount] = useState();
   const [tokens, setTokens] = useState([]);
   const [selectToken, setselectedtoken] = useState();
+  const [loader, setLoader] = useState(false);
 
   const DAIContractAddress = process.env.REACT_APP_DAI_CONTRACT_ADDRESS;
   const BetContractAddress = process.env.REACT_APP_Bet_CONTRACT_ADDRESS;
@@ -42,13 +44,27 @@ export default function Bet() {
   }, []);
 
   const handleBet =async(id,team,amount)=>{
+    console.log("bet initiated");
     const betContract = new ethers.Contract(
         BetContractAddress,
         BetABI,
         signer
       );
       const bet = await betContract.placeBet(id,team,amount)
-
+      console.log("bet confirming");
+      let txConfirm = await provider.getTransaction(bet.hash)
+      console.log(txConfirm)
+      // wait for transaction to be mined
+      setLoader(true)
+      console.log(loader)
+      while (txConfirm.blockNumber === null) {
+        txConfirm = await provider.getTransaction(bet.hash)
+        // create a loader  
+        console.log("waiting for transaction to be mined")        
+      }
+      console.log(loader)
+      setLoader(false)
+      console.log("transaction mined")
   }
 
   const handleFlashBet =async(id,team,amount,selectToken)=>{
@@ -83,6 +99,7 @@ export default function Bet() {
         <br/>
         <br/>
         <h3>Bet</h3>
+        {loader ? <Loader /> : <> </>}
     {event &&
       <form > 
       <lebel>Select Team:</lebel>
