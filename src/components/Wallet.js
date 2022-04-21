@@ -2,6 +2,7 @@ import React from "react";
 import { useState,useEffect } from "react";
 import { ethers } from "ethers";
 
+import Loader from "./Loader";
 import DAIABI from "../abis/DAI.json";
 import BetABI from "../abis/Bet.json";
 
@@ -15,6 +16,8 @@ export default function () {
     const [ongoingBetAmount,setOngoingBetAmount]=useState(0)
     const [tokens, setTokens] = useState([]);
     const [selectToken, setselectedtoken] = useState();
+    const [loader, setLoader] = useState(false);
+
 
 
     const factor = 1000000000000000000;
@@ -69,12 +72,39 @@ export default function () {
     await approvetx.wait();
 
     const tx = await betContract.deposit(registeredtokens[selectToken], amount);
+    let txConfirm = await provider.getTransaction(tx.hash)
+      console.log(txConfirm)
+      // wait for transaction to be mined
+      setLoader(true)
+      console.log(loader)
+      while (txConfirm.blockNumber === null) {
+        txConfirm = await provider.getTransaction(tx.hash)
+        // create a loader  
+        console.log("waiting for transaction to be mined")        
+      }
+      console.log(loader)
+      setLoader(false)
+      console.log("transaction mined")
+
   };
 
   const WithdrawHandler = async(amount)=>{
     const betContract = new ethers.Contract(BetContractAddress, BetABI, signer);
     const registeredtokens = await betContract.registerdTokens();
     const tx = await betContract.withdrawAmount(amount,registeredtokens[selectToken]);
+    let txConfirm = await provider.getTransaction(tx.hash)
+      console.log(txConfirm)
+      // wait for transaction to be mined
+      setLoader(true)
+      console.log(loader)
+      while (txConfirm.blockNumber === null) {
+        txConfirm = await provider.getTransaction(tx.hash)
+        // create a loader  
+        console.log("waiting for transaction to be mined")        
+      }
+      console.log(loader)
+      setLoader(false)
+      console.log("transaction mined")
   }
   const mode=(e)=>{
       if(e.target.value ==="Deposit"){
@@ -107,10 +137,11 @@ export default function () {
 
 
   return (
-
+    
     <div className="depositCard">
-
       <h3>Deposit DAI</h3>
+      {loader ? <Loader /> : <> </>}
+
       <input type="number" placeholder="Amount in Wei"  onChange={(e)=>{setamount(e.target.value )}}/>
       <lebel>Select Token:</lebel>
       <select onChange={(e)=>{setselectedtoken(e.target.value)}}>
