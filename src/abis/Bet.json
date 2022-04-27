@@ -390,7 +390,7 @@
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "oddsTeamA",
+        "name": "oddsTeamB",
         "type": "uint256"
       }
     ],
@@ -620,19 +620,6 @@
     "stateMutability": "view",
     "type": "function",
     "constant": true
-  },
-  {
-    "inputs": [],
-    "name": "getBlock",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
   },
   {
     "inputs": [
