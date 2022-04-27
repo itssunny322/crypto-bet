@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 
+import Loader from "./Loader";
+
 import BetOracleABI from "../abis/BetOracle.json";
 
 export default function AddEvent() {
@@ -8,6 +10,7 @@ export default function AddEvent() {
   const [teamA, setTeamA] = useState();
   const [teamB, setTeamB] = useState();
   const [date, setdate] = useState();
+  const [loader, setLoader] = useState(false);
 
   const BetOracleContractAddress =
     process.env.REACT_APP_BetOracle_CONTRACT_ADDRESS;
@@ -31,11 +34,26 @@ export default function AddEvent() {
       var currentblocknumber = await provider.getBlockNumber();
       var newBlocknum = currentblocknumber + diffHours*KovanTime;
       const res = await betOracleContract.addSportEvent(Category,teamA,teamB,newBlocknum)
+
+      let txConfirm = await provider.getTransaction(res.hash)
+
+      // wait for transaction to be mined
+      setLoader(true)
+
+      while (txConfirm.blockNumber === null) {
+        txConfirm = await provider.getTransaction(res.hash)
+        // create a loader  
+        console.log("waiting for transaction to be mined")        
+      }
+      console.log(loader)
+      setLoader(false)
+      console.log("transaction mined")
   }
   return (
     <div>
       <br />
       <h3>Add Event</h3>
+      {loader ? <Loader /> : <> </>}
       <div
         className="form-group container"
         style={{ border: "1px solid black" }}
