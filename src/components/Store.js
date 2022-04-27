@@ -5,6 +5,7 @@ import { ethers } from "ethers";
 
 import BetABI from "../abis/Bet.json";
 import DAIABI from "../abis/DAI.json";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function () {
     const BetContractAddress = process.env.REACT_APP_Bet_CONTRACT_ADDRESS;
@@ -13,21 +14,61 @@ export default function () {
     const signer = provider.getSigner();
 
     const [tokens, setTokens] = useState([]);
-    const [name, setName] = useState("");
-    const [symbol, setSymbol] = useState(0);
-    const [balance, setBalance] = useState(0);
+    const [name, setName] = useState([]);
+    const [symbol, setSymbol] = useState([]);
+    const [balance, setBalance] = useState([]);
+    const [captch,setcaptch]=useState(false)
+    const[obj,setobj]=useState([])
+    
 
     useEffect(() => {
         getTokens();
-    }, []);
+        for(let i=0;i< tokens.length;i++){
+             getTokenDetails(tokens[i])
+            console.log(i)
+        }
+       
+    },[captch]);
+    useEffect(()=>{
+        let s=[]
+        for (let i = 0; i < tokens.length; i++) {
+         let a= tokens[i]
+       
+        getTokenDetails(a).then(function(res){return res}).then(function(data){s=data
+            let o={};
+        o["token"]=a;
+        let bal = parseInt((data.bal._hex).slice(2), 16)
+        let symbol = data.symbol
+        let name= data.name
+        o["bal"]=bal;
+        o["name"]=name;
+        o["symbol"]=symbol;
+        setobj((obj)=>[...obj,o])
+        console.log(obj,"d")
+    }) 
+    
+        }
+        
+          
+    
+      },[captch])
+
+  const verifyCallback=(response)=>{
+    if(response){
+      setcaptch(true)
+    }
+  }
+
 
     const getTokens = async () => {
         const betContract = new ethers.Contract(BetContractAddress, BetABI, signer);
-        const tokens = await betContract.registerdTokens();
-        setTokens(tokens);
+        const token = await betContract.registerdTokens();
+        setTokens(tokens=>[...tokens,token[0]]);
+      
     };
 
     const getTokenDetails = async (tokenAddress) => {
+        
         const daiContract = new ethers.Contract(tokenAddress, DAIABI, signer);
         const balance = await daiContract.balanceOf(BetContractAddress);
         const name = await daiContract.name();
@@ -35,27 +76,45 @@ export default function () {
         setBalance(parseInt((balance._hex).slice(2), 16));
         setName(name);
         setSymbol(symbol);
+        const res={"name":name,"symbol":symbol,"bal":balance}
+        return res
     };
 
 
     return (
         <div>
-            <h1>List of tokens Available</h1>
-            <ul>
-                {tokens.map((token, index) => {
-                    return (
-                        <li key={index}>
-                            <h3>{token}</h3>
-                            <button onClick={() => getTokenDetails(token)}>Get Details</button>
-                            <ul>
-                                <li>{name}</li>
-                                <li>{symbol}</li>
-                                <li>{balance}</li>
-                            </ul>
-                        </li>
-                    );
+            {console.log(obj)}
+               {!captch&&
+               <ReCAPTCHA
+               sitekey="6LeBO7UcAAAAANpF1DGPjIhK0HjLJvgiQVHKS0in"
+               onChange={verifyCallback}
+               style={{textAlign:"center"}}
+             />}
+             
+          {obj && captch && <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Token</th>
+                <th scope="col">Name</th>
+                <th scope="col">Symbol</th>
+                <th scope="col">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+                {obj.map(i=>{
+                    return(
+                        <tr key={i}>
+                            <td>{i.token}</td>
+                            <td>{i.name}</td>
+                            <td>{i.symbol}</td>
+                            <td>{i.bal}</td>
+                        </tr>
+                    )
                 })}
-            </ul>
+                </tbody>
+                </table>}
+
+            
         </div>
     );
 }

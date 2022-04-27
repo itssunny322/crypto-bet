@@ -119,12 +119,12 @@ const Home = () => {
         <div className="accountDisplay">
           <h3>Address: {defaultAccount}</h3>
         </div>
-        <div className="balanceDisplay">
+        {/* <div className="balanceDisplay">
           <h3>Balance (Eth): {userBalance}</h3>
         </div>
         <div className="balanceDisplay">
           <h3>Balance (DAI): {userDAIbalance}</h3>
-        </div>
+        </div> */}
       </div>
 
       <div>

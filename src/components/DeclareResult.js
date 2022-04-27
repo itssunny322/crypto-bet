@@ -1,5 +1,9 @@
 import React,{useEffect,useState} from 'react'
 import { ethers } from "ethers";
+import ReCAPTCHA from "react-google-recaptcha";
+
+
+
 
 import DAIABI from "../abis/DAI.json";
 import BetABI from "../abis/Bet.json";
@@ -14,6 +18,9 @@ export default function DeclareResult() {
   const [allBettableEvents, setAllBettableEvents] = useState([]);
   const [eventDetail, setEventDetail] = useState([]);
   const[winner,setwinner]=useState()
+  const [captch,setcaptch]=useState(false)
+
+
 
   const DAIContractAddress = process.env.REACT_APP_DAI_CONTRACT_ADDRESS;
   const BetContractAddress = process.env.REACT_APP_Bet_CONTRACT_ADDRESS;
@@ -31,7 +38,17 @@ export default function DeclareResult() {
     for (let i = 0; i < allBettableEvents.length; i++) {
       showEventDetails(allBettableEvents[i]);
     }
-  }, [defaultAccount]);
+    console.log("running")
+    
+  }, [captch]);
+
+  const verifyCallback=(response)=>{
+    if(response){
+      setcaptch(true)
+    }
+  }
+
+ 
 
   const connectWalletHandler = async () => {
     if (window.ethereum && window.ethereum.isMetaMask) {
@@ -123,9 +140,17 @@ export default function DeclareResult() {
 
   return (
     <div className="home">
-      <h1>Circle Bet</h1>
+      
+        {!captch&&
+               <ReCAPTCHA
+               sitekey="6LeBO7UcAAAAANpF1DGPjIhK0HjLJvgiQVHKS0in"
+               onChange={verifyCallback}
+               style={{textAlign:"center"}}
+             />}
 
-      <div className="walletCard">
+      <h1>Declare Result</h1>
+
+      {/* <div className="walletCard">
         <button onClick={connectWalletHandler}>{connButtonText}</button>
         <div className="accountDisplay">
           <h3>Address: {defaultAccount}</h3>
@@ -136,10 +161,10 @@ export default function DeclareResult() {
         <div className="balanceDisplay">
           <h3>Balance (DAI): {userDAIbalance}</h3>
         </div>
-      </div>
+      </div> */}
 
       <div>
-        <h3>Bettable Events</h3>
+        <h3>Events</h3>
         <ul>
           <table class="table">
             <thead>
