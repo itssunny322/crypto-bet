@@ -23,28 +23,26 @@ export default function () {
 
     useEffect(() => {
         getTokens();
-        for(let i=0;i< tokens.length;i++){
-             getTokenDetails(tokens[i])
-            console.log(i)
+        for(let i=0;i<= tokens.length;i++){
+            getTokenDetails(tokens[i])
         }
        
     },[captch]);
     useEffect(()=>{
         let s=[]
         for (let i = 0; i < tokens.length; i++) {
-         let a= tokens[i]
+            let a= tokens[i]
        
-        getTokenDetails(a).then(function(res){return res}).then(function(data){s=data
-            let o={};
-        o["token"]=a;
-        let bal = parseInt((data.bal._hex).slice(2), 16)
-        let symbol = data.symbol
-        let name= data.name
-        o["bal"]=bal;
-        o["name"]=name;
-        o["symbol"]=symbol;
-        setobj((obj)=>[...obj,o])
-        console.log(obj,"d")
+            getTokenDetails(a).then(function(res){return res}).then(function(data){s=data
+                let o={};
+            o["token"]=a;
+            let bal = parseInt((data.bal._hex).slice(2), 16)
+            let symbol = data.symbol
+            let name= data.name
+            o["bal"]=bal;
+            o["name"]=name;
+            o["symbol"]=symbol;
+            setobj((obj)=>[...obj,o])
     }) 
     
         }
@@ -63,8 +61,7 @@ export default function () {
     const getTokens = async () => {
         const betContract = new ethers.Contract(BetContractAddress, BetABI, signer);
         const token = await betContract.registerdTokens();
-        setTokens(tokens=>[...tokens,token[0]]);
-      
+        setTokens(token);
     };
 
     const getTokenDetails = async (tokenAddress) => {
@@ -83,7 +80,6 @@ export default function () {
 
     return (
         <div>
-            {console.log(obj)}
                {!captch&&
                <ReCAPTCHA
                sitekey="6LeBO7UcAAAAANpF1DGPjIhK0HjLJvgiQVHKS0in"
