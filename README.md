@@ -66,4 +66,3 @@ User2 place 100$ on TeamB (consider 1:1 complete odds) and TeamA wins , then we 
 
 Contributed by :
  - Sunny 
- - Siddharth 
